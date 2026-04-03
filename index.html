@@ -2427,7 +2427,16 @@ function resetView(){
     if(url){
       var banner=document.getElementById('auto-load-banner');
       if(banner) banner.style.display='';
-      cloudPull();
+      cloudPull().then(function(){
+        // After pull, switch to upload tab to reset state, then re-render
+        setTimeout(function(){
+          try{switchTab('upload');}catch(e){}
+          setTimeout(function(){
+            try{renderAll();}catch(e){}
+            try{renderIOSAll();}catch(e){}
+          },200);
+        },300);
+      }).catch(function(){});
     }
   },800);
 })();
