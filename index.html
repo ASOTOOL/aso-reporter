@@ -527,8 +527,8 @@ select:focus{border-color:var(--green);}
     <!-- ══ CLOUD SYNC PANEL ══ -->
     <div class="method-panel" id="panel-cloud">
       <div style="background:var(--bg2);border:1px solid rgba(91,156,246,.3);border-radius:12px;padding:18px;margin-bottom:14px;">
-        <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px;">☁️ Live Data Feed</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Data automatically loads from Google Sheets. Refresh the page to see latest updates.</div>
+        <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px;">☁️ Google Sheets Cloud Sync</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Paste your Apps Script URL once — all data syncs to/from Google Sheets automatically.</div>
 
         <div style="margin-bottom:12px;">
           <div style="display:none">APPS SCRIPT URL</div>
@@ -544,16 +544,22 @@ select:focus{border-color:var(--green);}
           <button class="btn green" onclick="cloudPull()" id="btn-pull">
             ⬇️ Pull from Google Sheets
           </button>
-          <!-- Push/Diagnose removed: view-only version -->
+          <button class="btn" onclick="cloudPush()" id="btn-push" style="display:none">
+            ⬆️ Push to Google Sheets
+          </button>
+          <button class="btn sm ghost" onclick="cloudDiagnose()" id="btn-diagnose" style="display:none">
+            🔍 Diagnose
+          </button>
+        </div>
 
         <div id="cloud-status" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:10px;"></div>
 
         <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
           <div style="font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;margin-bottom:8px;">AUTO-SYNC SETTINGS</div>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2);">
-            <input type="checkbox" id="cloud-autopush" disabled
+            <input type="checkbox" id="cloud-autopush" onchange="saveCloudSettings()"
               style="accent-color:var(--blue);width:14px;height:14px;">
-            View-only mode — data loads automatically
+            Auto-push to Sheets after every CSV merge
           </label>
         </div>
       </div>
@@ -2427,16 +2433,7 @@ function resetView(){
     if(url){
       var banner=document.getElementById('auto-load-banner');
       if(banner) banner.style.display='';
-      cloudPull().then(function(){
-        // After pull, switch to upload tab to reset state, then re-render
-        setTimeout(function(){
-          try{switchTab('upload');}catch(e){}
-          setTimeout(function(){
-            try{renderAll();}catch(e){}
-            try{renderIOSAll();}catch(e){}
-          },200);
-        },300);
-      }).catch(function(){});
+      cloudPull();
     }
   },800);
 })();
