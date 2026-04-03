@@ -527,15 +527,15 @@ select:focus{border-color:var(--green);}
     <!-- ══ CLOUD SYNC PANEL ══ -->
     <div class="method-panel" id="panel-cloud">
       <div style="background:var(--bg2);border:1px solid rgba(91,156,246,.3);border-radius:12px;padding:18px;margin-bottom:14px;">
-        <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px;">☁️ Google Sheets Cloud Sync</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Paste your Apps Script URL once — all data syncs to/from Google Sheets automatically.</div>
+        <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px;">☁️ Live Data Feed</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Data automatically loads from Google Sheets. Refresh the page to see latest updates.</div>
 
         <div style="margin-bottom:12px;">
-          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;">APPS SCRIPT URL</div>
+          <div style="display:none">APPS SCRIPT URL</div>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="cloud-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec"
+            <input type="text" id="cloud-url" style="display:none" placeholder="https://script.google.com/macros/s/YOUR_ID/exec"
               style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;font-size:11px;font-family:var(--mono);outline:none;">
-            <button class="btn sm green" onclick="saveCloudUrl()">Save URL</button>
+            <button class="btn sm green" onclick="saveCloudUrl()" style="display:none">Save URL</button>
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:5px;" id="cloud-url-status"></div>
         </div>
@@ -544,22 +544,16 @@ select:focus{border-color:var(--green);}
           <button class="btn green" onclick="cloudPull()" id="btn-pull">
             ⬇️ Pull from Google Sheets
           </button>
-          <button class="btn" onclick="cloudPush()" id="btn-push" style="border-color:rgba(91,156,246,.4);color:var(--blue);">
-            ⬆️ Push to Google Sheets
-          </button>
-          <button class="btn sm ghost" onclick="cloudDiagnose()" id="btn-diagnose" title="Check what columns the script finds in each sheet">
-            🔍 Diagnose
-          </button>
-        </div>
+          <!-- Push/Diagnose removed: view-only version -->
 
         <div id="cloud-status" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:10px;"></div>
 
         <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
           <div style="font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;margin-bottom:8px;">AUTO-SYNC SETTINGS</div>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2);">
-            <input type="checkbox" id="cloud-autopush" onchange="saveCloudSettings()"
+            <input type="checkbox" id="cloud-autopush" disabled
               style="accent-color:var(--blue);width:14px;height:14px;">
-            Auto-push to Sheets after every CSV merge
+            View-only mode — data loads automatically
           </label>
         </div>
       </div>
