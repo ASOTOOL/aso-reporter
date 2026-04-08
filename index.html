@@ -531,11 +531,11 @@ select:focus{border-color:var(--green);}
         <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Paste your Apps Script URL once — all data syncs to/from Google Sheets automatically.</div>
 
         <div style="margin-bottom:12px;">
-          <div style="display:none">APPS SCRIPT URL</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;">APPS SCRIPT URL</div>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="cloud-url" style="display:none" placeholder="https://script.google.com/macros/s/YOUR_ID/exec"
+            <input type="text" id="cloud-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec"
               style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;font-size:11px;font-family:var(--mono);outline:none;">
-            <button class="btn sm green" onclick="saveCloudUrl()" style="display:none">Save URL</button>
+            <button class="btn sm green" onclick="saveCloudUrl()">Save URL</button>
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:5px;" id="cloud-url-status"></div>
         </div>
@@ -544,10 +544,13 @@ select:focus{border-color:var(--green);}
           <button class="btn green" onclick="cloudPull()" id="btn-pull">
             ⬇️ Pull from Google Sheets
           </button>
-          <button class="btn" onclick="cloudPush()" id="btn-push" style="display:none">
+          <button class="btn danger" onclick="clearAndRePull()" id="btn-clear-pull" title="Clears all cached data and pulls fresh from Google Sheets — fixes date issues">
+            🗑️ Clear Cache & Re-pull
+          </button>
+          <button class="btn" onclick="cloudPush()" id="btn-push" style="border-color:rgba(91,156,246,.4);color:var(--blue);">
             ⬆️ Push to Google Sheets
           </button>
-          <button class="btn sm ghost" onclick="cloudDiagnose()" id="btn-diagnose" style="display:none">
+          <button class="btn sm ghost" onclick="cloudDiagnose()" id="btn-diagnose" title="Check what columns the script finds in each sheet">
             🔍 Diagnose
           </button>
         </div>
@@ -1069,31 +1072,39 @@ const ANR_BENCHMARK = 0.47;
 const DB_KEY = 'aso_reporter_v6';
 const IOS_DB_KEY = 'aso_reporter_ios_v1';
 
+// ── IN-MEMORY DB (works on both file:// and http://) ──
+// Data lives in memory — always pulled fresh from Google Sheets on load.
+// No localStorage used, so file:// and shared GitHub tool both work perfectly.
+var _memDB = null;
+var _memIOSDB = null;
+function _emptyDB(){return {anr:{},crash:{},ads:{},explore:{},search:{},adsCountry:{},exploreCountry:{},searchCountry:{},reviews:[],meta:{}};}
+function _emptyIOSDB(){return {crashCount:{},crashes:{},impr:{},imprU:{},ppv:{},ppvU:{},dl:{},cvr:{},updates:{}};}
+
 // ── ANDROID DB ──
 function loadDB(){
-  try{const d=localStorage.getItem(DB_KEY);return d?JSON.parse(d):{anr:{},crash:{},ads:{},explore:{},search:{},adsCountry:{},exploreCountry:{},searchCountry:{},reviews:[],meta:{}};}
-  catch{return {anr:{},crash:{},ads:{},explore:{},search:{},adsCountry:{},exploreCountry:{},searchCountry:{},reviews:[],meta:{}};}
+  if(!_memDB) _memDB=_emptyDB();
+  return _memDB;
 }
-function saveDB(db){try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(e){toast('⚠️ Storage full — clear old data');}}
+function saveDB(db){_memDB=db;}
 
 // ── iOS DB ──
 function loadIOSDB(){
-  try{const d=localStorage.getItem(IOS_DB_KEY);return d?JSON.parse(d):{crashCount:{},crashes:{},impr:{},imprU:{},ppv:{},ppvU:{},dl:{},cvr:{},updates:{}};}
-  catch{return {crashCount:{},crashes:{},impr:{},imprU:{},ppv:{},ppvU:{},dl:{},cvr:{},updates:{}};}
+  if(!_memIOSDB) _memIOSDB=_emptyIOSDB();
+  return _memIOSDB;
 }
-function saveIOSDB(db){try{localStorage.setItem(IOS_DB_KEY,JSON.stringify(db));}catch(e){toast('⚠️ iOS storage full');}}
+function saveIOSDB(db){_memIOSDB=db;}
 function getDB(){return loadDB();}
 
 function dbToArrays(){
   const db=loadDB();
-  const toArr=obj=>Object.values(obj||{}).map(r=>({...r,dateObj:new Date(r.dateObj||r.date)})).sort((a,b)=>new Date(a.dateObj)-new Date(b.dateObj));
+  const toArr=obj=>Object.values(obj||{}).map(r=>({...r,dateObj:new Date((r.dateObj||r.date)+'T00:00:00')})).sort((a,b)=>a.dateObj-b.dateObj);
   return {
     anr:toArr(db.anr), crash:toArr(db.crash),
     ads:toArr(db.ads), explore:toArr(db.explore), search:toArr(db.search),
     adsCountry:Object.values(db.adsCountry||{}),
     exploreCountry:Object.values(db.exploreCountry||{}),
     searchCountry:Object.values(db.searchCountry||{}),
-    reviews:(db.reviews||[]).map(r=>({...r,dateObj:new Date(r.dateObj||r.date)})).sort((a,b)=>new Date(b.dateObj)-new Date(a.dateObj)),
+    reviews:(db.reviews||[]).map(r=>({...r,dateObj:new Date((r.dateObj||r.date)+'T00:00:00')})).sort((a,b)=>b.dateObj-a.dateObj),
     meta:db.meta||{},
     hasAnr:Object.keys(db.anr||{}).length>0,
     hasCrash:Object.keys(db.crash||{}).length>0,
@@ -1139,7 +1150,8 @@ function mergeMetaIntoDB(meta){const db=loadDB();db.meta={...db.meta,...meta};sa
 
 function clearDataBank(){
   if(!confirm('Clear ALL stored data? Cannot be undone.')) return;
-  localStorage.removeItem(DB_KEY);
+  _memDB=_emptyDB();
+  _memIOSDB=_emptyIOSDB();
   updateDatabankUI();
   destroyAll();
   ['crash-empty','conv-empty','rev-empty'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
@@ -1159,7 +1171,7 @@ function updateDatabankUI(){
   const total=c('anr')+c('crash')+c('ads')+c('explore')+c('search')+(db.reviews||[]).length;
   document.getElementById('db-badge').textContent=total>0?total+' records':'empty';
   const allKeys=[...Object.keys(db.anr||{}),...Object.keys(db.ads||{}),...Object.keys(db.explore||{}),...Object.keys(db.search||{})].sort();
-  document.getElementById('db-range').textContent=allKeys.length>=2?fmtShort(new Date(allKeys[0]))+' – '+fmtShort(new Date(allKeys[allKeys.length-1])):'—';
+  document.getElementById('db-range').textContent=allKeys.length>=2?fmtShort(new Date(allKeys[0]+'T00:00:00'))+' – '+fmtShort(new Date(allKeys[allKeys.length-1]+'T00:00:00')):'—';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1173,6 +1185,8 @@ function parseNum(v){
 function parseDate(s){
   if(!s) return null;
   s=String(s).trim().replace(/^"|"$/g,'');
+  // ISO date string "2026-04-06" — parse as local time to avoid UTC midnight shift
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s+'T00:00:00');
   let d=new Date(s);
   if(!isNaN(d)&&d.getFullYear()>2000) return d;
   const m1=s.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
@@ -1182,11 +1196,16 @@ function parseDate(s){
   return null;
 }
 function isoDate(d){
-  if(!d) return '';const dd=d instanceof Date?d:new Date(d);
-  if(isNaN(dd)) return '';return dd.toISOString().split('T')[0];
+  if(!d) return '';
+  // If already an ISO string like "2026-04-06", return directly — no Date() conversion needed
+  if(typeof d==='string'&&/^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0,10);
+  const dd=d instanceof Date?d:new Date(d+'T00:00:00');
+  if(isNaN(dd)) return '';
+  const y=dd.getFullYear(),m=String(dd.getMonth()+1).padStart(2,'0'),day=String(dd.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
 }
-function fmtDate(d){if(!d)return '—';const dd=d instanceof Date?d:new Date(d);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
-function fmtShort(d){if(!d)return '—';const dd=d instanceof Date?d:new Date(d);return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});}
+function fmtDate(d){if(!d)return '—';const dd=d instanceof Date?d:(typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)?new Date(d+'T00:00:00'):new Date(d));return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtShort(d){if(!d)return '—';const dd=d instanceof Date?d:(typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)?new Date(d+'T00:00:00'):new Date(d));return dd.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});}
 function numFmt(n){if(n===null||n===undefined||isNaN(+n))return '—';n=+n;if(n>=1000000)return (n/1000000).toFixed(1)+'M';if(n>=1000)return (n/1000).toFixed(1)+'K';return String(Math.round(n));}
 function safeNum(v){var n=parseFloat(String(v||'').replace('%','').replace(',','').trim());return isNaN(n)?null:n;}
 function fmt2(v){var n=safeNum(v);return n!=null?n.toFixed(2):'—';}
@@ -2572,7 +2591,7 @@ function updateIOSDatabank(){
 
 function clearIOSDataBank(){
   if(!confirm('Clear ALL iOS stored data? Cannot be undone.')) return;
-  localStorage.removeItem(IOS_DB_KEY);
+  _memIOSDB=_emptyIOSDB();
   updateIOSDatabank();
   destroyAll();
   const empties=['ios-crash-empty','ios-conv-empty'];
@@ -3298,6 +3317,23 @@ async function cloudPush(){
   setStatus((allOk?'OK - All pushed':'WARN - Some failed')+' at '+new Date().toLocaleTimeString()+' | '+results.join(' | '),'ok');
   toast(allOk?'OK All data pushed to Google Sheets':'WARN Some sheets failed — check status');
   if(btn){btn.textContent='Push Push to Google Sheets';btn.disabled=false;}
+}
+
+// ── CLEAR CACHE & RE-PULL: wipes localStorage then pulls fresh ──
+async function clearAndRePull(){
+  const url=getCloudUrl();
+  if(!url){toast('⚠️ Set your Apps Script URL in Cloud Sync tab first');setMethod('cloud');return;}
+  if(!confirm('This will clear all cached data and pull fresh from Google Sheets.\n\nThis fixes date issues. Continue?')) return;
+  const btn=document.getElementById('btn-clear-pull');
+  if(btn){btn.textContent='🗑️ Clearing...';btn.disabled=true;}
+  // Wipe both Android and iOS cached data
+  _memDB=_emptyDB();
+  _memIOSDB=_emptyIOSDB();
+  toast('Cache cleared — pulling fresh data...');
+  if(btn){btn.textContent='⬇️ Pulling...';btn.disabled=true;}
+  // Now do a normal pull with clean slate
+  await cloudPull();
+  if(btn){btn.textContent='🗑️ Clear Cache & Re-pull';btn.disabled=false;}
 }
 
 // ── PULL: Sheets → local (JSONP — works from file://) ──
