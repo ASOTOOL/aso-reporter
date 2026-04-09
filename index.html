@@ -927,8 +927,7 @@ select:focus{border-color:var(--green);}
             <div id="iosc-avg-lbl" style="font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;margin-bottom:7px;">AVG CRASH RATE — SELECTED PERIOD</div>
             <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;">
               <div id="iosc-avg-val" style="font-size:34px;font-weight:600;color:var(--purple);letter-spacing:-.5px;">—</div>
-              <div style="font-size:13px;color:var(--text2);">crashes ÷ sessions &nbsp;·&nbsp; Benchmark: <strong id="iosc-bench-lbl" style="color:var(--amber);font-size:16px;">0.0109</strong></div>
-              <div id="iosc-avg-diff"></div>
+              <div style="font-size:13px;color:var(--text2);">crashes ÷ sessions</div>
             </div>
           </div>
           <div style="margin-left:auto;font-size:12px;color:var(--text3);font-family:var(--mono);" id="iosc-period-lbl"></div>
@@ -939,10 +938,8 @@ select:focus{border-color:var(--green);}
       <div class="metrics" id="iosc-all-metrics"></div>
 
       <!-- iOS CRASH RATE HEADING -->
-      <div class="section-hdr" style="margin-top:8px;">
-        <div class="section-hdr-line"></div>
-        <div class="section-hdr-label" style="background:rgba(155,135,245,.1);color:var(--purple);border:1px solid rgba(155,135,245,.2);">📱 iOS Crash Rate</div>
-        <div class="section-hdr-line"></div>
+      <div style="text-align:center;margin:18px 0 14px;padding:14px;background:rgba(155,135,245,.06);border:1px solid rgba(155,135,245,.2);border-radius:10px;">
+        <div style="font-size:18px;font-weight:700;color:var(--purple);letter-spacing:.5px;">MSS iOS Crash Rate</div>
       </div>
 
       <!-- SINGLE COMBINED CHART: crash count bars + rate line -->
@@ -2847,8 +2844,7 @@ function renderIOSCrashDashboard(){
     const lbl=document.getElementById('iosc-avg-lbl');if(lbl) lbl.textContent='AVG CRASH RATE'+dateRange;
     const vEl=document.getElementById('iosc-avg-val');if(vEl) vEl.textContent=avgRate.toFixed(4);
     const blbl=document.getElementById('iosc-bench-lbl');if(blbl) blbl.textContent=cThresh.toFixed(4);
-    const dEl=document.getElementById('iosc-avg-diff');
-    if(dEl) dEl.innerHTML=`<span style="color:${cAbove?'var(--red)':'var(--green)'};background:${cAbove?'rgba(244,84,106,.14)':'rgba(34,211,160,.14)'};padding:4px 14px;border-radius:6px;font-size:13px;font-weight:600;">${cAbove?'↑ +':'↓ '}${Math.abs(cDiff).toFixed(5)} ${cAbove?'above':'below'} benchmark</span>`;
+    // benchmark display removed
     const pEl=document.getElementById('iosc-period-lbl');if(pEl) pEl.textContent=merged.length+'d selected';
   }
 
