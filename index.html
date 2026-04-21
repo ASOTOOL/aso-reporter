@@ -222,7 +222,7 @@ select:focus{border-color:var(--green);}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <span class="badge">v5.3</span>
+    <span class="badge">v5.4</span>
     <button class="btn sm ghost" id="reset-btn" onclick="resetView()" style="display:none">↩ Reset view</button>
   </div>
 </div>
@@ -1076,12 +1076,36 @@ function _emptyDB(){return {anr:{},crash:{},ads:{},explore:{},search:{},adsCount
 function _emptyIOSDB(){return {crashCount:{},crashes:{},impr:{},imprU:{},ppv:{},ppvU:{},dl:{},cvr:{},updates:{}};}
 
 function loadDB(){
-  try{var raw=localStorage.getItem('aso_db');if(!raw)return _emptyDB();
-  var db=JSON.parse(raw);if(!db.ratings)db.ratings={};return db;}
-  catch(e){return _emptyDB();}
+  try{
+    var raw=localStorage.getItem('aso_db');
+    if(!raw)return _emptyDB();
+    var db=JSON.parse(raw);
+    if(!db.ratings)db.ratings={};
+    // Load reviews from separate key (split storage to avoid quota overflow)
+    try{var rRaw=localStorage.getItem('aso_db_reviews');db.reviews=rRaw?JSON.parse(rRaw):(db.reviews||[]);}
+    catch(e){db.reviews=db.reviews||[];}
+    return db;
+  }catch(e){return _emptyDB();}
 }
-function saveDB(db){try{localStorage.setItem('aso_db',JSON.stringify(db));}catch(e){toast('Storage error');}}
-function clearDB(){localStorage.removeItem('aso_db');}
+function saveDB(db){
+  try{
+    // Save main data (everything EXCEPT reviews) — stays tiny, always fits
+    var reviews=db.reviews||[];
+    var small=Object.assign({},db,{reviews:[]});
+    localStorage.setItem('aso_db',JSON.stringify(small));
+    // Save reviews separately with progressive fallback if too big
+    var saveRevs=function(revs){try{localStorage.setItem('aso_db_reviews',JSON.stringify(revs));return true;}catch(e){return false;}};
+    if(!saveRevs(reviews)){
+      var trimmed=reviews.map(function(r){return Object.assign({},r,{text:(r.text||'').substring(0,500)});});
+      if(!saveRevs(trimmed)){
+        var capped=trimmed.slice(-3000);
+        if(!saveRevs(capped)){saveRevs(capped.slice(-1500));toast('Reviews partially stored (browser quota)');}
+        else toast('Reviews capped to 3000 latest');
+      }
+    }
+  }catch(e){toast('Storage error: '+e.message);console.error('saveDB',e);}
+}
+function clearDB(){localStorage.removeItem('aso_db');localStorage.removeItem('aso_db_reviews');}
 
 function loadIOSDB(){try{var r=localStorage.getItem('aso_ios_db');return r?JSON.parse(r):_emptyIOSDB();}catch(e){return _emptyIOSDB();}}
 function saveIOSDB(db){try{localStorage.setItem('aso_ios_db',JSON.stringify(db));}catch(e){}}
