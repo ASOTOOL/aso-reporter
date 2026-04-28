@@ -222,7 +222,7 @@ select:focus{border-color:var(--green);}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <span class="badge">v5.5</span>
+    <span class="badge">v5.6</span>
     <button class="btn sm ghost" id="reset-btn" onclick="resetView()" style="display:none">↩ Reset view</button>
   </div>
 </div>
@@ -1863,11 +1863,25 @@ function renderIOSConvDashboard(){
       '<div class="metric"><div class="metric-lbl">CVR%</div><div class="metric-val col-amber">'+pctFmt(cvr)+'</div></div>';
     destroyCh('ch-ios-'+src);
     var labels=imprR.map(function(r){return fmtShort(new Date(isoDate(r.dateObj)));});
+    // Build per-day CVR% based on selected mode
+    var imprByDate={},ppvByDate={},dlByDate={};
+    imprR.forEach(function(r){imprByDate[isoDate(r.dateObj)]=+r[src]||0;});
+    ppv.forEach(function(r){ppvByDate[isoDate(r.dateObj)]=+r[src]||0;});
+    dl.forEach(function(r){dlByDate[isoDate(r.dateObj)]=+r[src]||0;});
+    var cvrSeries=imprR.map(function(r){
+      var iso=isoDate(r.dateObj);
+      var d=dlByDate[iso]||0;
+      var b;
+      if(mode==='impr'||mode==='imprU')b=imprByDate[iso]||0;
+      else b=ppvByDate[iso]||0;
+      return b>0?(d/b*100):null;
+    });
     CH['ch-ios-'+src]=new Chart(document.getElementById('ch-ios-'+src),{type:'line',data:{labels:labels,datasets:[
       {label:'Impressions',data:imprR.map(function(r){return r[src]||0;}),borderColor:sourceColors[src],tension:.35,fill:false,pointRadius:0,pointHoverRadius:4,yAxisID:'y'},
       {label:'PPV',data:ppv.map(function(r){return r[src]||0;}),borderColor:'#5b9cf6',tension:.35,fill:false,pointRadius:0,pointHoverRadius:4,yAxisID:'y'},
-      {label:'Downloads',data:dl.map(function(r){return r[src]||0;}),borderColor:'#22d3a0',tension:.35,fill:false,pointRadius:0,pointHoverRadius:4,yAxisID:'y'}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#8891b0',font:{size:10}}},tooltip:{backgroundColor:'rgba(20,22,32,.97)',titleColor:'#dde1f0',bodyColor:'#8891b0',borderColor:'rgba(255,255,255,.1)',borderWidth:1,padding:10,callbacks:{label:function(c){return c.dataset.label+': '+numFmt(c.parsed.y);}}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d6a',font:{size:10},maxTicksLimit:14,autoSkip:true}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d6a',font:{size:10},callback:function(v){return numFmt(v);}}}}}});
+      {label:'Downloads',data:dl.map(function(r){return r[src]||0;}),borderColor:'#22d3a0',tension:.35,fill:false,pointRadius:0,pointHoverRadius:4,yAxisID:'y'},
+      {label:'CVR %',data:cvrSeries,borderColor:'#f5b942',backgroundColor:'transparent',borderDash:[4,3],tension:.35,fill:false,pointRadius:0,pointHoverRadius:4,yAxisID:'y2'}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#8891b0',font:{size:10}}},tooltip:{backgroundColor:'rgba(20,22,32,.97)',titleColor:'#dde1f0',bodyColor:'#8891b0',borderColor:'rgba(255,255,255,.1)',borderWidth:1,padding:10,callbacks:{label:function(c){return c.dataset.label+': '+(c.dataset.label==='CVR %'?(c.parsed.y!=null?c.parsed.y.toFixed(2)+'%':'—'):numFmt(c.parsed.y));}}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d6a',font:{size:10},maxTicksLimit:14,autoSkip:true}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d6a',font:{size:10},callback:function(v){return numFmt(v);}}},y2:{position:'right',grid:{display:false},ticks:{color:'#f5b942',font:{size:10},callback:function(v){return v.toFixed(2)+'%';}}}}}});
   });
 }
 
