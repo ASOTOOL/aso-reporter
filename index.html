@@ -2016,5 +2016,43 @@ async function clearAndRePull(){
   }
 })();
 </script>
+  <script>
+// ═══ HOVER FIX FOR iOS CHARTS — appended patch ═══
+// This runs after every chart is created and forces hover-on-anywhere mode.
+(function(){
+  function patchAll(){
+    if(!window.CH) return;
+    var ids=['ch-ios-combined','ch-ios-sessions','ch-ios-browse','ch-ios-search','ch-ios-appref','ch-ios-webref'];
+    ids.forEach(function(id){
+      var c=window.CH[id];
+      if(!c||!c.options) return;
+      c.options.interaction={mode:'index',intersect:false};
+      c.options.plugins=c.options.plugins||{};
+      c.options.plugins.tooltip={
+        enabled:true,
+        backgroundColor:'rgba(20,22,32,.97)',
+        titleColor:'#dde1f0',
+        bodyColor:'#8891b0',
+        borderColor:'rgba(255,255,255,.1)',
+        borderWidth:1,
+        padding:10,
+        callbacks:{
+          label:function(ctx){
+            var lbl=ctx.dataset.label||'';
+            var v=ctx.parsed.y;
+            if(v==null) return lbl;
+            var isPct=lbl.indexOf('%')>=0||lbl.indexOf('Rate')>=0;
+            var fmt=isPct?(v.toFixed(2)+'%'):(Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(1)+'K':String(Math.round(v*100)/100));
+            return lbl+': '+fmt;
+          }
+        }
+      };
+      c.update('none');
+    });
+  }
+  // Patch on load and every time iOS dashboards re-render
+  setInterval(patchAll, 800);
+})();
+</script>
 </body>
 </html>
