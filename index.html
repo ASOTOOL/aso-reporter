@@ -284,82 +284,8 @@ body.platform-ios #android-tabs{display:none !important;}
     <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Import new data</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">New uploads merge into the Data Bank. Previous months stay stored automatically.</div>
     <div class="method-tabs">
-      <button class="method-tab active" onclick="setMethod('csv')">📄 CSV Upload</button>
+      <button class="method-tab active" onclick="setMethod('cloud')" style="color:#5b9cf6;">☁️ Cloud Sync</button>
       <button class="method-tab" onclick="setMethod('screenshot')">📋 JSON Import</button>
-      <button class="method-tab" onclick="setMethod('manual')">✏️ Manual Entry</button>
-      <button class="method-tab" onclick="setMethod('cloud')" style="color:#5b9cf6;">☁️ Cloud Sync</button>
-    </div>
-    <div class="method-panel active" id="panel-csv">
-      <div class="upload-group" id="android-vitals-upload">
-        <div class="upload-group-title">🐛 Android Vitals</div>
-        <div class="upload-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
-          <div class="upload-card" id="uc-anr" ondragover="csvDrag(event,'anr',true)" ondragleave="csvDrag(event,'anr',false)" ondrop="csvDrop(event,'anr')" onclick="document.getElementById('input-anr').click()"><div class="uc-check">✓</div><div class="uc-icon">📉</div><div class="uc-title">ANR Rate</div><div class="uc-sub">Android vitals → ANR rate</div><div class="uc-hint">Date · Daily · 28 days rolling avg</div><div class="uc-file" id="uc-anr-name"></div></div>
-          <div class="upload-card" id="uc-crash" ondragover="csvDrag(event,'crash',true)" ondragleave="csvDrag(event,'crash',false)" ondrop="csvDrop(event,'crash')" onclick="document.getElementById('input-crash').click()"><div class="uc-check">✓</div><div class="uc-icon">💥</div><div class="uc-title">Crash Rate</div><div class="uc-sub">Android vitals → Crash rate</div><div class="uc-hint">Date · Daily · 28 days rolling avg</div><div class="uc-file" id="uc-crash-name"></div></div>
-        </div>
-      </div>
-      <div class="upload-group">
-        <div class="upload-group-title">📊 Store Listing Conversions — Daily (all countries)</div>
-        <div class="upload-grid">
-          <div class="upload-card" id="uc-ads-daily" ondragover="csvDrag(event,'ads-daily',true)" ondragleave="csvDrag(event,'ads-daily',false)" ondrop="csvDrop(event,'ads-daily')" onclick="document.getElementById('input-ads-daily').click()"><div class="uc-check">✓</div><div class="uc-icon">🎯</div><div class="uc-title">Ads & Referrals</div><div class="uc-sub">daily_performance.csv</div><div class="uc-hint">Date · Visitors · Acquisitions · CVR%</div><div class="uc-file" id="uc-ads-daily-name"></div></div>
-          <div class="upload-card" id="uc-explore-daily" ondragover="csvDrag(event,'explore-daily',true)" ondragleave="csvDrag(event,'explore-daily',false)" ondrop="csvDrop(event,'explore-daily')" onclick="document.getElementById('input-explore-daily').click()"><div class="uc-check">✓</div><div class="uc-icon">🔍</div><div class="uc-title">Google Play Explore</div><div class="uc-sub">daily_performance.csv</div><div class="uc-hint">Date · Visitors · Acquisitions · CVR%</div><div class="uc-file" id="uc-explore-daily-name"></div></div>
-          <div class="upload-card" id="uc-search-daily" ondragover="csvDrag(event,'search-daily',true)" ondragleave="csvDrag(event,'search-daily',false)" ondrop="csvDrop(event,'search-daily')" onclick="document.getElementById('input-search-daily').click()"><div class="uc-check">✓</div><div class="uc-icon">🔎</div><div class="uc-title">Google Play Search</div><div class="uc-sub">daily_performance.csv</div><div class="uc-hint">Date · Visitors · Acquisitions · CVR%</div><div class="uc-file" id="uc-search-daily-name"></div></div>
-        </div>
-      </div>
-      <div class="upload-group">
-        <div class="upload-group-title">🌍 Store Listing Conversions — By Country (period totals)</div>
-        <div class="upload-grid">
-          <div class="upload-card" id="uc-ads-country" ondragover="csvDrag(event,'ads-country',true)" ondragleave="csvDrag(event,'ads-country',false)" ondrop="csvDrop(event,'ads-country')" onclick="document.getElementById('input-ads-country').click()"><div class="uc-check">✓</div><div class="uc-icon">🎯</div><div class="uc-title">Ads — By Country</div><div class="uc-sub">total_performance.csv</div><div class="uc-hint">Country · Visitors · Acquisitions · CVR%</div><div class="uc-file" id="uc-ads-country-name"></div></div>
-          <div class="upload-card" id="uc-explore-country" ondragover="csvDrag(event,'explore-country',true)" ondragleave="csvDrag(event,'explore-country',false)" ondrop="csvDrop(event,'explore-country')" onclick="document.getElementById('input-explore-country').click()"><div class="uc-check">✓</div><div class="uc-icon">🔍</div><div class="uc-title">Explore — By Country</div><div class="uc-sub">total_performance.csv</div><div class="uc-hint">Country · Visitors · Acquisitions · CVR%</div><div class="uc-file" id="uc-explore-country-name"></div></div>
-          <div class="upload-card" id="uc-search-country" ondragover="csvDrag(event,'search-country',true)" ondragleave="csvDrag(event,'search-country',false)" ondrop="csvDrop(event,'search-country')" onclick="document.getElementById('input-search-country').click()"><div class="uc-check">✓</div><div class="uc-icon">🔎</div><div class="uc-title">Search — By Country</div><div class="uc-sub">total_performance.csv</div><div class="uc-hint">Country · Visitors · Acquisitions · CVR%</div><div class="uc-file" id="uc-search-country-name"></div></div>
-        </div>
-      </div>
-      <div class="upload-group" id="android-upload-reviews">
-        <div class="upload-group-title">⭐ Player Reviews</div>
-        <div class="upload-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
-          <div class="upload-card" id="uc-rev" ondragover="csvDrag(event,'rev',true)" ondragleave="csvDrag(event,'rev',false)" ondrop="csvDrop(event,'rev')" onclick="document.getElementById('input-rev').click()"><div class="uc-check">✓</div><div class="uc-icon">⭐</div><div class="uc-title">Player Reviews</div><div class="uc-sub">Ratings & reviews → All reviews</div><div class="uc-hint">Submit date · Star rating · Review text</div><div class="uc-file" id="uc-rev-name"></div></div>
-        </div>
-      </div>
-      <div id="ios-upload-section" style="display:none">
-        <div class="upload-group">
-          <div class="upload-group-title" style="color:#5b9cf6;">🍎 iOS Crashes — upload BOTH files from App Store Connect</div>
-          <div class="upload-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
-            <div class="upload-card" id="uc-ios-crashes-count" ondragover="csvDrag(event,'ios-crashes-count',true)" ondragleave="csvDrag(event,'ios-crashes-count',false)" ondrop="csvDrop(event,'ios-crashes-count')" onclick="document.getElementById('input-ios-crashes-count').click()"><div class="uc-check">✓</div><div class="uc-icon">🔢</div><div class="uc-title">Crashes (Count)</div><div class="uc-sub">crashes CSV — numbers only</div><div class="uc-hint">Date · Crashes</div><div class="uc-file" id="uc-ios-crashes-count-name"></div></div>
-            <div class="upload-card" id="uc-ios-crashes" ondragover="csvDrag(event,'ios-crashes',true)" ondragleave="csvDrag(event,'ios-crashes',false)" ondrop="csvDrop(event,'ios-crashes')" onclick="document.getElementById('input-ios-crashes').click()"><div class="uc-check">✓</div><div class="uc-icon">📊</div><div class="uc-title">Crashes + Sessions (Ratio)</div><div class="uc-sub">crashes-sessions CSV</div><div class="uc-hint">Date · Crashes · Sessions</div><div class="uc-file" id="uc-ios-crashes-name"></div></div>
-          </div>
-        </div>
-        <div class="upload-group">
-          <div class="upload-group-title" style="color:#5b9cf6;">🍎 iOS Conversion — one CSV per metric type (all 4 sources in each file)</div>
-          <div class="upload-grid">
-            <div class="upload-card" id="uc-ios-impr" ondragover="csvDrag(event,'ios-impr',true)" ondragleave="csvDrag(event,'ios-impr',false)" ondrop="csvDrop(event,'ios-impr')" onclick="document.getElementById('input-ios-impr').click()"><div class="uc-check">✓</div><div class="uc-icon">👁</div><div class="uc-title">Impressions</div><div class="uc-sub">impressions CSV</div><div class="uc-hint">Date · [Source] Impressions × 4</div><div class="uc-file" id="uc-ios-impr-name"></div></div>
-            <div class="upload-card" id="uc-ios-impru" ondragover="csvDrag(event,'ios-impru',true)" ondragleave="csvDrag(event,'ios-impru',false)" ondrop="csvDrop(event,'ios-impru')" onclick="document.getElementById('input-ios-impru').click()"><div class="uc-check">✓</div><div class="uc-icon">👤</div><div class="uc-title">Impressions (Unique)</div><div class="uc-sub">impressions unique devices CSV</div><div class="uc-hint">Date · [Source] Impressions (Unique) × 4</div><div class="uc-file" id="uc-ios-impru-name"></div></div>
-            <div class="upload-card" id="uc-ios-ppv" ondragover="csvDrag(event,'ios-ppv',true)" ondragleave="csvDrag(event,'ios-ppv',false)" ondrop="csvDrop(event,'ios-ppv')" onclick="document.getElementById('input-ios-ppv').click()"><div class="uc-check">✓</div><div class="uc-icon">📄</div><div class="uc-title">Product Page Views</div><div class="uc-sub">product_page_views CSV</div><div class="uc-hint">Date · [Source] Product Page Views × 4</div><div class="uc-file" id="uc-ios-ppv-name"></div></div>
-            <div class="upload-card" id="uc-ios-ppvu" ondragover="csvDrag(event,'ios-ppvu',true)" ondragleave="csvDrag(event,'ios-ppvu',false)" ondrop="csvDrop(event,'ios-ppvu')" onclick="document.getElementById('input-ios-ppvu').click()"><div class="uc-check">✓</div><div class="uc-icon">📄</div><div class="uc-title">Product Page Views (Unique)</div><div class="uc-sub">product_page_views unique CSV</div><div class="uc-hint">Date · [Source] PPV (Unique) × 4</div><div class="uc-file" id="uc-ios-ppvu-name"></div></div>
-            <div class="upload-card" id="uc-ios-dl" ondragover="csvDrag(event,'ios-dl',true)" ondragleave="csvDrag(event,'ios-dl',false)" ondrop="csvDrop(event,'ios-dl')" onclick="document.getElementById('input-ios-dl').click()"><div class="uc-check">✓</div><div class="uc-icon">⬇️</div><div class="uc-title">Total Downloads</div><div class="uc-sub">total_downloads CSV</div><div class="uc-hint">Date · [Source] Total Downloads × 4</div><div class="uc-file" id="uc-ios-dl-name"></div></div>
-            <div class="upload-card" id="uc-ios-cvr" ondragover="csvDrag(event,'ios-cvr',true)" ondragleave="csvDrag(event,'ios-cvr',false)" ondrop="csvDrop(event,'ios-cvr')" onclick="document.getElementById('input-ios-cvr').click()"><div class="uc-check">✓</div><div class="uc-icon">📈</div><div class="uc-title">Conversion Rate</div><div class="uc-sub">conversion_rate CSV</div><div class="uc-hint">Date · [Source] Conversion Rate × 4</div><div class="uc-file" id="uc-ios-cvr-name"></div></div>
-            <div class="upload-card" id="uc-ios-upd" ondragover="csvDrag(event,'ios-upd',true)" ondragleave="csvDrag(event,'ios-upd',false)" ondrop="csvDrop(event,'ios-upd')" onclick="document.getElementById('input-ios-upd').click()"><div class="uc-check">✓</div><div class="uc-icon">🔄</div><div class="uc-title">Updates</div><div class="uc-sub">updates CSV</div><div class="uc-hint">Date · [Source] Updates × 4</div><div class="uc-file" id="uc-ios-upd-name"></div></div>
-          </div>
-        </div>
-        <input type="file" class="file-hidden" id="input-ios-crashes-count" accept=".csv" onchange="loadCSV('ios-crashes-count',this)">
-        <input type="file" class="file-hidden" id="input-ios-crashes" accept=".csv" onchange="loadCSV('ios-crashes',this)">
-        <input type="file" class="file-hidden" id="input-ios-impr" accept=".csv" onchange="loadCSV('ios-impr',this)">
-        <input type="file" class="file-hidden" id="input-ios-impru" accept=".csv" onchange="loadCSV('ios-impru',this)">
-        <input type="file" class="file-hidden" id="input-ios-ppv" accept=".csv" onchange="loadCSV('ios-ppv',this)">
-        <input type="file" class="file-hidden" id="input-ios-ppvu" accept=".csv" onchange="loadCSV('ios-ppvu',this)">
-        <input type="file" class="file-hidden" id="input-ios-dl" accept=".csv" onchange="loadCSV('ios-dl',this)">
-        <input type="file" class="file-hidden" id="input-ios-cvr" accept=".csv" onchange="loadCSV('ios-cvr',this)">
-        <input type="file" class="file-hidden" id="input-ios-upd" accept=".csv" onchange="loadCSV('ios-upd',this)">
-        <div class="btn-row" style="margin-top:4px;"><button class="btn green" onclick="processIOSCSVData()">Merge iOS Data →</button></div>
-      </div>
-      <input type="file" class="file-hidden" id="input-anr" accept=".csv" onchange="loadCSV('anr',this)">
-      <input type="file" class="file-hidden" id="input-crash" accept=".csv" onchange="loadCSV('crash',this)">
-      <input type="file" class="file-hidden" id="input-ads-daily" accept=".csv" onchange="loadCSV('ads-daily',this)">
-      <input type="file" class="file-hidden" id="input-explore-daily" accept=".csv" onchange="loadCSV('explore-daily',this)">
-      <input type="file" class="file-hidden" id="input-search-daily" accept=".csv" onchange="loadCSV('search-daily',this)">
-      <input type="file" class="file-hidden" id="input-ads-country" accept=".csv" onchange="loadCSV('ads-country',this)">
-      <input type="file" class="file-hidden" id="input-explore-country" accept=".csv" onchange="loadCSV('explore-country',this)">
-      <input type="file" class="file-hidden" id="input-search-country" accept=".csv" onchange="loadCSV('search-country',this)">
-      <input type="file" class="file-hidden" id="input-rev" accept=".csv" onchange="loadCSV('rev',this)">
-      <div class="btn-row"><button class="btn green" onclick="processCSVData()">Merge into Data Bank →</button><button class="btn ghost" onclick="loadDemo()">Try demo data</button></div>
     </div>
     <div class="method-panel" id="panel-screenshot">
       <div class="ss-notice"><div class="ss-notice-title">📋 Paste Claude JSON (for Play Console screenshots)</div><div class="ss-steps"><div class="ss-step"><div class="ss-step-num">1</div><div>Screenshot Play Console → paste into <strong>claude.ai</strong> → ask Claude to extract data as JSON</div></div><div class="ss-step"><div class="ss-step-num">2</div><div>Copy JSON → paste below → click <strong>Import & Merge</strong></div></div></div></div>
@@ -367,20 +293,7 @@ body.platform-ios #android-tabs{display:none !important;}
       <div class="btn-row" style="margin-top:8px;"><button class="btn purple" onclick="importJSON()">Import & Merge →</button><button class="btn ghost sm" onclick="document.getElementById('json-paste').value=''">Clear</button></div>
       <div class="ai-result" id="ai-result"><div style="font-size:10px;font-weight:500;color:var(--purple);font-family:var(--mono);margin-bottom:6px;letter-spacing:.5px;">✦ IMPORTED</div><div id="ai-chips" class="ai-chips"></div></div>
     </div>
-    <div class="method-panel" id="panel-manual">
-      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;">Add daily ANR / Crash rows manually</div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end;margin-bottom:7px;">
-        <div class="mfield"><div class="mfield-lbl">Date</div><input type="text" id="m-date" placeholder="Mar 2, 2026" style="width:125px"></div>
-        <div class="mfield"><div class="mfield-lbl">ANR Daily %</div><input type="number" id="m-anr" placeholder="1.02" step="0.01" style="width:88px"></div>
-        <div class="mfield"><div class="mfield-lbl">ANR 28d %</div><input type="number" id="m-anr28" placeholder="0.88" step="0.01" style="width:85px"></div>
-        <div class="mfield"><div class="mfield-lbl">Crash Daily %</div><input type="number" id="m-crash" placeholder="opt." step="0.01" style="width:88px"></div>
-        <div class="mfield"><div class="mfield-lbl">Crash 28d %</div><input type="number" id="m-crash28" placeholder="opt." step="0.01" style="width:85px"></div>
-        <button class="btn sm green" onclick="addManualRow()" style="margin-top:14px">+ Add</button>
-      </div>
-      <div class="manual-rows" id="manual-rows"></div>
-      <div class="btn-row"><button class="btn green" onclick="processManualData()">Apply & Merge →</button><button class="btn ghost" onclick="loadDemo()">Try demo data</button></div>
-    </div>
-    <div class="method-panel" id="panel-cloud">
+    <div class="method-panel active" id="panel-cloud">
       <div style="background:var(--bg2);border:1px solid rgba(91,156,246,.3);border-radius:12px;padding:18px;margin-bottom:14px;">
         <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px;">☁️ Google Sheets Cloud Sync</div>
         <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Paste your Apps Script URL once — all data syncs to/from Google Sheets automatically.</div>
@@ -391,15 +304,9 @@ body.platform-ios #android-tabs{display:none !important;}
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
           <button class="btn green" onclick="cloudPull()" id="btn-pull">⬇️ Pull from Google Sheets</button>
-          <button class="btn danger" onclick="clearAndRePull()" id="btn-clear-pull" title="Clears all cached data and pulls fresh">🗑️ Clear Cache & Re-pull</button>
-          <button class="btn" onclick="cloudPush()" id="btn-push" style="border-color:rgba(91,156,246,.4);color:var(--blue);">⬆️ Push to Google Sheets</button>
           <button class="btn sm ghost" onclick="cloudDiagnose()" id="btn-diagnose">🔍 Diagnose</button>
         </div>
         <div id="cloud-status" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:10px;"></div>
-        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
-          <div style="font-size:10px;font-weight:600;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;margin-bottom:8px;">AUTO-SYNC SETTINGS</div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2);"><input type="checkbox" id="cloud-autopush" onchange="saveCloudSettings()" style="accent-color:var(--blue);width:14px;height:14px;">Auto-push to Sheets after every CSV merge</label>
-        </div>
       </div>
     </div>
   </div>
@@ -746,7 +653,7 @@ function exportPDF(){window.print();}
 
 function setPlatform(p){currentPlatform=p;document.body.classList.toggle('platform-android',p==='android');document.body.classList.toggle('platform-ios',p==='ios');document.getElementById('plat-android').classList.toggle('active',p==='android');document.getElementById('plat-ios').classList.toggle('active',p==='ios');document.getElementById('hdr-platform-sub').textContent=p==='android'?'Supermarket Game · Google Play Console':'Supermarket Game · App Store Connect';document.getElementById('android-databank').style.display=p==='android'?'':'none';document.getElementById('ios-databank').style.display=p==='ios'?'':'none';document.getElementById('android-vitals-upload').style.display=p==='android'?'':'none';document.getElementById('android-upload-reviews').style.display=p==='android'?'':'none';document.getElementById('ios-upload-section').style.display=p==='ios'?'':'none';document.querySelectorAll('#panel-csv .upload-group').forEach(function(g){var t=g.querySelector('.upload-group-title');if(!t)return;var txt=t.textContent;if(p==='ios'&&(txt.indexOf('Store Listing')!==-1||txt.indexOf('📊')===0||txt.indexOf('🌍')===0))g.style.display='none';else if(p==='android'&&txt.indexOf('🍎')!==-1)g.style.display='none';else g.style.display='';});switchTab('upload');if(p==='android')renderAll();else renderIOSAll();}
 function switchTab(t){var bar=currentPlatform==='android'?document.getElementById('android-tabs'):document.getElementById('ios-tabs');bar.querySelectorAll('.tab').forEach(function(el){var match=(el.getAttribute('onclick')||'').indexOf("'"+t+"'")!==-1;el.classList.toggle('active',match);});var ALL=['upload','crashes','conversion','reviews','ratings','report','ios-crashes','ios-conversion','ios-reviews-info'];ALL.forEach(function(id){var el=document.getElementById('tab-'+id);if(el)el.style.display=(id===t)?'':'none';});if(t==='ratings')setTimeout(function(){var d=dbToArrays();if(d.hasRatings)renderRatingsSection();},40);if(t==='reviews')setTimeout(function(){var d=dbToArrays();if(d.hasReviews)renderReviewsSection();},40);}
-function setMethod(m){['csv','screenshot','manual','cloud'].forEach(function(n){document.getElementById('panel-'+n).classList.toggle('active',n===m);});document.querySelectorAll('.method-tab').forEach(function(el){el.classList.toggle('active',(el.getAttribute('onclick')||'').indexOf("'"+m+"'")!==-1);});}
+function setMethod(m){['screenshot','cloud'].forEach(function(n){var p=document.getElementById('panel-'+n);if(p)p.classList.toggle('active',n===m);});document.querySelectorAll('.method-tab').forEach(function(el){el.classList.toggle('active',(el.getAttribute('onclick')||'').indexOf("'"+m+"'")!==-1);});}
 function clearDataBank(){if(!confirm('Clear all Android data?'))return;clearDB();updateDatabankUI();renderAll();toast('Cleared');}
 function clearIOSDataBank(){if(!confirm('Clear all iOS data?'))return;clearIOSDB();updateDatabankUI();renderIOSAll();toast('Cleared iOS');}
 function resetView(){['cf-from','cf-to','conv-from','conv-to','rev-from','rev-to','rt-from','rt-to','iosc-from','iosc-to','iosconv-from','iosconv-to'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});selectedBuilds=new Set(ALL_BUILDS);renderAll();if(currentPlatform==='ios')renderIOSAll();document.getElementById('reset-btn').style.display='none';toast('View reset');}
