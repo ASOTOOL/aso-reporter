@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
 :root{--bg:#0d0f14;--bg2:#13151c;--bg3:#1a1d26;--bg4:#20232e;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--text:#dde1f0;--text2:#8891b0;--text3:#454d6a;--green:#22d3a0;--red:#f4546a;--amber:#f5b942;--blue:#5b9cf6;--purple:#9b87f5;--mono:'JetBrains Mono',monospace;--sans:'Sora',system-ui,sans-serif;}
@@ -323,7 +324,7 @@ body.platform-ios #android-tabs{display:none !important;}
   <button class="tab" onclick="switchTab('reviews')">⭐ Reviews</button>
   <button class="tab" onclick="switchTab('ratings')">📊 Daily Ratings</button>
   <button class="tab" onclick="switchTab('upload')">📂 Data Upload</button>
-  <button class="tab" onclick="switchTab('report')">📋 Generate Report</button>
+  <button class="tab" onclick="switchTab('report')">📊 Weekly Report</button>
 </div>
 <div class="tabs" id="ios-tabs">
   <button class="tab active" onclick="switchTab('ios-crashes')">💥 Crashes</button>
@@ -331,7 +332,7 @@ body.platform-ios #android-tabs{display:none !important;}
   <button class="tab" onclick="switchTab('abtests')">🧪 A/B Testing</button>
   <button class="tab" onclick="switchTab('ios-reviews-info')">⭐ Ratings & Reviews</button>
   <button class="tab" onclick="switchTab('upload')">📂 Data Upload</button>
-  <button class="tab" onclick="switchTab('report')">📋 Generate Report</button>
+  <button class="tab" onclick="switchTab('report')">📊 Weekly Report</button>
 </div>
 <div class="main">
   <div id="tab-upload">
@@ -593,18 +594,84 @@ body.platform-ios #android-tabs{display:none !important;}
     </div>
   </div>
   <div id="tab-report" style="display:none">
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-        <div><div style="font-size:12px;color:#e4e9f5;font-family:var(--mono);font-weight:600;margin-bottom:4px;letter-spacing:.4px;">PLATFORM</div><select id="rep-platform" style="min-width:170px;"><option value="android">📱 Android</option><option value="ios">🍎 iOS</option><option value="both">📱+🍎 Both Platforms</option></select></div>
-        <div><div style="font-size:12px;color:#e4e9f5;font-family:var(--mono);font-weight:600;margin-bottom:4px;letter-spacing:.4px;">FROM</div><input type="date" id="rep-from"></div>
-        <div><div style="font-size:12px;color:#e4e9f5;font-family:var(--mono);font-weight:600;margin-bottom:4px;letter-spacing:.4px;">TO</div><input type="date" id="rep-to"></div>
-        <div style="display:flex;gap:4px;"><button class="btn sm ghost" onclick="setRepRange(7)" title="Last 7 days">7d</button><button class="btn sm ghost" onclick="setRepRange(30)" title="Last 30 days">30d</button><button class="btn sm ghost" onclick="setRepRange(90)" title="Last 90 days">90d</button></div>
-        <button class="btn green" onclick="generateReport()">📋 Generate Report</button>
-        <button class="btn pdf" onclick="exportPDF()">📄 Export PDF</button>
+    <!-- ═══ WEEKLY REPORT GENERATOR ═══ -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:20px;">📊</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);">Weekly Report Generator</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">Select week range → preview slides → download .pptx</div>
+        </div>
       </div>
-      <div style="font-size:10.5px;color:var(--text3);margin-top:8px;line-height:1.5;">💡 Select platform & date range. Report will build inline below with ANRs, Crashes, Conversion, Ratings, Reviews & A/B Testing. Click <b>Export PDF</b> to download.</div>
+      <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+
+      <!-- Date pickers -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <!-- Current week -->
+        <div style="background:var(--bg3);border:1.5px solid rgba(34,211,160,.35);border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--green);font-family:var(--mono);letter-spacing:.8px;margin-bottom:10px;">📅 CURRENT WEEK</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">FROM</div>
+              <input type="date" id="wr-curr-from" oninput="wrAutoSetPrev()" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">TO</div>
+              <input type="date" id="wr-curr-to" oninput="wrAutoSetPrev()" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+        </div>
+        <!-- Previous week -->
+        <div style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text2);font-family:var(--mono);letter-spacing:.8px;margin-bottom:10px;">🔄 COMPARE WITH (Previous Week)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">FROM</div>
+              <input type="date" id="wr-prev-from" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">TO</div>
+              <input type="date" id="wr-prev-to" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week # + quick buttons -->
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">WEEK #</div>
+          <input type="number" id="wr-week-num" min="1" max="52" placeholder="e.g. 13"
+            style="width:80px;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;outline:none;">
+        </div>
+        <button class="btn sm ghost" onclick="wrSetThisWeek()">📅 Latest in data</button>
+        <button class="btn sm ghost" onclick="wrSetLastWeek()">◀ Last 7 days</button>
+        <button class="btn sm ghost" onclick="wrClearDates()">✕ Clear</button>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn" id="wr-preview-btn" onclick="wrPreview()" style="background:var(--blue);color:#fff;border:none;">
+          👁 Preview Slides
+        </button>
+        <button class="btn green" id="wr-download-btn" onclick="generateWeeklyPPTX()" disabled style="opacity:.45;cursor:not-allowed;">
+          ⬇ Download PPTX
+        </button>
+        <span style="font-size:11px;color:var(--text3);">Preview first, then download</span>
+      </div>
+
+      <!-- Status bar -->
+      <div id="wr-status" style="display:none;margin-top:12px;padding:9px 13px;border-radius:8px;font-size:12px;"></div>
     </div>
-    <div id="report-out"><div class="empty"><div class="empty-icon">📋</div><p>Report will appear here</p><span>Select platform & date range, then click Generate Report</span></div></div>
+
+    <!-- Preview panel -->
+    <div id="wr-preview-panel" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">📋 Slide Preview</div>
+        <div style="font-size:11px;color:var(--text3);" id="wr-slide-count"></div>
+      </div>
+      <div id="wr-preview-slides" style="display:flex;flex-direction:column;gap:14px;"></div>
+    </div>
   </div>
   <div id="tab-ios-crashes" style="display:none">
     <div id="ios-crash-empty" class="empty"><div class="empty-icon">💥</div><p>No iOS crash data yet</p><span>Upload crash CSV files in Data Upload → iOS section</span></div>
@@ -918,6 +985,701 @@ async function generateIOSConvPDF(){ensureReporter();var db=loadIOSDB();var impr
 // INIT
 // ═══════════════════════════════════════════════════════════════════
 (function init(){migrateToMultiGame();var g=getCurrentGame();document.getElementById('hdr-game-name').textContent=g.name;document.getElementById('hdr-platform-sub').textContent='Google Play Console';var sgEmoji=document.getElementById('select-game-emoji');if(sgEmoji)sgEmoji.textContent=g.emoji||'📱';var sgLabel=document.getElementById('select-game-label');if(sgLabel)sgLabel.textContent=g.name;document.title='Playspare ASO Reporter — '+g.name;var savedReporter=getReporter();if(savedReporter){var el=document.getElementById('reporter-input');if(el)el.value=savedReporter;}_updateReporterDisplay();var url=getCloudUrl();var urlInput=document.getElementById('cloud-url');if(urlInput)urlInput.value=url||'';_updateCloudUrlStatus();var ap=localStorage.getItem(_gk('aso_cloud_autopush'))==='1';var apEl=document.getElementById('cloud-autopush');if(apEl)apEl.checked=ap;if(!localStorage.getItem(_gk('aso_abtests_demo_v2'))){var existing=loadABTests();existing=existing.filter(function(t){return t.id!=='demo_current_icon_polished';});if(!existing.length)existing=getABTDemoData();saveABTests(existing);localStorage.setItem(_gk('aso_abtests_demo_v2'),'1');}updateDatabankUI();renderAll();setTimeout(function(){var d=dbToArrays();var ios=loadIOSDB();if(!d.hasANR&&!d.hasConv&&!d.hasReviews&&!d.hasRatings&&!Object.keys(ios.crashes||{}).length&&url){document.getElementById('auto-load-banner').style.display='';cloudPull();setTimeout(function(){document.getElementById('auto-load-banner').style.display='none';},2000);}},300);window.addEventListener('beforeunload',function(){if(_cloudUrlSaveTimer){clearTimeout(_cloudUrlSaveTimer);var el=document.getElementById('cloud-url');if(el)localStorage.setItem(_gk('aso_cloud_url'),el.value.trim());}});document.addEventListener('click',function(e){var wrap=document.getElementById('build-dropdown-wrap');var list=document.getElementById('build-dropdown-list');if(wrap&&list&&!wrap.contains(e.target))list.style.display='none';});})();
+
+
+// ═══════════════════════════════════════════════════════════════════
+// WEEKLY REPORT GENERATOR — PPTX FEATURE
+// PptxGenJS CDN required: https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js
+// ═══════════════════════════════════════════════════════════════════
+
+// ── Date helpers for the UI ──────────────────────────────────────
+function wrSetThisWeek(){
+  var d=dbToArrays();
+  var all=d.anr.concat(d.crash,d.ads,d.explore,d.search,d.ratings);
+  if(!all.length){toast('No data in bank to auto-set week');return;}
+  var dates=all.map(function(r){return new Date(r.dateObj);}).filter(function(x){return !isNaN(x);}).sort(function(a,b){return a-b;});
+  var last=dates[dates.length-1];
+  var first=new Date(last);first.setDate(first.getDate()-6);
+  document.getElementById('wr-curr-from').value=first.toISOString().slice(0,10);
+  document.getElementById('wr-curr-to').value=last.toISOString().slice(0,10);
+  autoSetPrevWeek();
+}
+function wrSetLastWeek(){
+  var today=new Date();
+  var to=new Date(today);to.setDate(to.getDate()-7);
+  var from=new Date(to);from.setDate(from.getDate()-6);
+  document.getElementById('wr-curr-from').value=from.toISOString().slice(0,10);
+  document.getElementById('wr-curr-to').value=to.toISOString().slice(0,10);
+  autoSetPrevWeek();
+}
+function autoSetPrevWeek(){
+  var from=document.getElementById('wr-curr-from').value;
+  var to=document.getElementById('wr-curr-to').value;
+  if(!from||!to)return;
+  var prevTo=new Date(from);prevTo.setDate(prevTo.getDate()-1);
+  var prevFrom=new Date(prevTo);prevFrom.setDate(prevFrom.getDate()-6);
+  document.getElementById('wr-prev-from').value=prevFrom.toISOString().slice(0,10);
+  document.getElementById('wr-prev-to').value=prevTo.toISOString().slice(0,10);
+}
+function wrStatus(msg,type){
+  var el=document.getElementById('wr-status');
+  if(!el)return;
+  el.style.display='';
+  el.textContent=msg;
+  var cols={success:['rgba(34,211,160,.08)','rgba(34,211,160,.3)','var(--green)'],error:['rgba(244,84,106,.08)','rgba(244,84,106,.3)','var(--red)'],info:['rgba(91,156,246,.08)','rgba(91,156,246,.3)','var(--blue)']};
+  var c=cols[type||'info'];
+  el.style.background=c[0];el.style.border='1px solid '+c[1];el.style.color=c[2];
+}
+
+// ── Main generator ───────────────────────────────────────────────
+async function generateWeeklyPPTX(){
+  if(typeof PptxGenJS==='undefined'){toast('PptxGenJS not loaded — check internet connection');return;}
+  var currFrom=document.getElementById('wr-curr-from').value;
+  var currTo=document.getElementById('wr-curr-to').value;
+  if(!currFrom||!currTo){toast('Select current week dates first');return;}
+  var prevFrom=document.getElementById('wr-prev-from').value;
+  var prevTo=document.getElementById('wr-prev-to').value;
+  var weekNum=document.getElementById('wr-week-num').value||'';
+  var hasPrev=!!(prevFrom&&prevTo);
+  var btn=document.getElementById('wr-generate-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Generating…';}
+  wrStatus('Building slides… this takes ~30 seconds','info');
+  try{
+    await _doGeneratePPTX(currFrom,currTo,prevFrom,prevTo,weekNum,hasPrev);
+    wrStatus('✅ PPTX downloaded successfully','success');
+  }catch(e){
+    console.error('PPTX error',e);
+    wrStatus('❌ Error: '+e.message,'error');
+    toast('Error: '+e.message);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='📊 Generate & Download PPTX';}
+  }
+}
+
+async function _doGeneratePPTX(currFrom,currTo,prevFrom,prevTo,weekNum,hasPrev){
+  var pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_WIDE'; // 13.3" × 7.5"
+  pptx.author='Playspare ASO Reporter';
+  pptx.title=getCurrentGame().name+' Weekly ASO Report';
+
+  var gameName=getCurrentGame().name;
+  var d=dbToArrays();
+  var iosDB=loadIOSDB();
+
+  // ── Date range data ──
+  var cAnr=_repFilt(d.anr,currFrom,currTo);
+  var pAnr=hasPrev?_repFilt(d.anr,prevFrom,prevTo):[];
+  var cCrash=_repFilt(d.crash,currFrom,currTo);
+  var pCrash=hasPrev?_repFilt(d.crash,prevFrom,prevTo):[];
+  var cExp=_repFilt(d.explore,currFrom,currTo);
+  var pExp=hasPrev?_repFilt(d.explore,prevFrom,prevTo):[];
+  var cAds=_repFilt(d.ads,currFrom,currTo);
+  var pAds=hasPrev?_repFilt(d.ads,prevFrom,prevTo):[];
+  var cRat=_repFilt(d.ratings,currFrom,currTo);
+  var pRat=hasPrev?_repFilt(d.ratings,prevFrom,prevTo):[];
+
+  // iOS crash merge
+  function mergeIOSCrash(db){
+    var cc=Object.values(db.crashCount||{});
+    var cs=Object.values(db.crashes||{});
+    var m={};
+    cc.forEach(function(r){m[r.dateObj]={dateObj:r.dateObj,date:r.date,crashes:r.crashes};});
+    cs.forEach(function(r){if(!m[r.dateObj])m[r.dateObj]={dateObj:r.dateObj,date:r.date};if(m[r.dateObj].crashes==null)m[r.dateObj].crashes=r.crashes;m[r.dateObj].sessions=r.sessions;});
+    return Object.values(m).sort(function(a,b){return new Date(a.dateObj)-new Date(b.dateObj);}).map(function(r){r.rate=r.sessions?(r.crashes/r.sessions*100):null;return r;});
+  }
+  var iosCrashAll=mergeIOSCrash(iosDB);
+  var cIOSCrash=_repFilt(iosCrashAll,currFrom,currTo);
+  var pIOSCrash=hasPrev?_repFilt(iosCrashAll,prevFrom,prevTo):[];
+
+  // ── Colors (no # prefix for pptxgenjs) ──
+  var C={dark:'0D0F14',green:'22D3A0',red:'F4546A',amber:'F5B942',blue:'5B9CF6',purple:'9B87F5',white:'FFFFFF',lightText:'8891B0',darkText:'1A1D26',grayBg:'F9FAFB',border:'E5E7EB',currBg:'F0FDF4',currBorder:'BBF7D0',currText:'166534',prevBg:'F9FAFB',prevText:'374151',iosBg:'EFF6FF',iosBorder:'BFDBFE',iosText:'1D4ED8'};
+
+  var currLabel=fmtLong(new Date(currFrom))+' — '+fmtLong(new Date(currTo));
+  var prevLabel=hasPrev?fmtLong(new Date(prevFrom))+' — '+fmtLong(new Date(prevTo)):'';
+
+  // ── Metric helpers ──
+  function avgRows(rows,key){var v=rows.map(function(r){return r[key];}).filter(function(x){return x!=null;});return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;}
+  function sumRows(rows,key){return rows.reduce(function(a,r){return a+(+r[key]||0);},0);}
+  function lastVal(rows,key){var r=rows[rows.length-1];return r?r[key]:null;}
+  function calcANR(rows){if(!rows.length)return null;var a=avgRows(rows,'daily');var avg28=lastVal(rows,'avg28');return{avg:a,avg28:avg28,days:rows.length};}
+  function calcCVR(rows){if(!rows.length)return null;var v=sumRows(rows,'visitors');var c=sumRows(rows,'converters');var cvals=rows.map(function(r){return cvrPct(r.cvr);}).filter(function(x){return x!=null;});var avgC=cvals.length?cvals.reduce(function(a,b){return a+b;},0)/cvals.length:null;return{visitors:v,converters:c,cvr:avgC};}
+  function calcRat(rows){if(!rows.length)return null;var t5=0,t4=0,t3=0,t2=0,t1=0;rows.forEach(function(r){t5+=r.s5||0;t4+=r.s4||0;t3+=r.s3||0;t2+=r.s2||0;t1+=r.s1||0;});var total=t5+t4+t3+t2+t1;var avg=total?(5*t5+4*t4+3*t3+2*t2+1*t1)/total:null;return{total:total,avg:avg,s5:t5,s4:t4,s3:t3,s2:t2,s1:t1,r5:total?t5/total*100:null,r1:total?t1/total*100:null};}
+  function calcIOSCrash(rows){if(!rows.length)return null;var c=sumRows(rows,'crashes');var s=sumRows(rows,'sessions');return{crashes:c,sessions:s,rate:s?(c/s*100):null};}
+  function calcIOSConv(db,from,to){
+    var cvrRows=_repFilt(Object.values(db.cvr||{}).sort(function(a,b){return new Date(a.dateObj)-new Date(b.dateObj);}),from,to);
+    if(cvrRows.length){
+      var sums={search:[],browse:[],appref:[],webref:[]};
+      cvrRows.forEach(function(r){['search','browse','appref','webref'].forEach(function(s){if(r[s]!=null)sums[s].push(+r[s]||0);});});
+      var res={};Object.keys(sums).forEach(function(s){res[s]=sums[s].length?sums[s].reduce(function(a,b){return a+b;},0)/sums[s].length:null;});
+      return res;
+    }
+    var ir=_repFilt(Object.values(db.impr||{}).sort(function(a,b){return new Date(a.dateObj)-new Date(b.dateObj);}),from,to);
+    var dr=_repFilt(Object.values(db.dl||{}).sort(function(a,b){return new Date(a.dateObj)-new Date(b.dateObj);}),from,to);
+    var res={};['search','browse','appref','webref'].forEach(function(s){var ti=ir.reduce(function(a,r){return a+(+r[s]||0);},0);var td=dr.reduce(function(a,r){return a+(+r[s]||0);},0);res[s]=ti?(td/ti*100):null;});
+    return res;
+  }
+
+  // ── Slide chrome helpers ──
+  function addChrome(slide,accentColor){
+    slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.3,h:0.07,fill:{color:accentColor},line:{color:accentColor}});
+    slide.addShape(pptx.ShapeType.line,{x:0.4,y:7.13,w:12.5,h:0,line:{color:C.border,width:0.5}});
+    slide.addText(gameName+' · Weekly ASO Report',{x:0,y:7.18,w:13.3,h:0.25,fontSize:8.5,color:'AAAAAA',align:'center',italic:true,fontFace:'Calibri'});
+    if(weekNum){
+      slide.addShape(pptx.ShapeType.rect,{x:11.75,y:0.12,w:1.1,h:0.32,fill:{color:C.white},line:{color:C.border,width:1}});
+      slide.addText('WEEK '+weekNum,{x:11.75,y:0.12,w:1.1,h:0.32,fontSize:9,bold:true,color:C.darkText,align:'center',valign:'middle',fontFace:'Calibri'});
+    }
+  }
+  function addPlatBadge(slide,text,color){
+    slide.addShape(pptx.ShapeType.rect,{x:0.4,y:1.03,w:0.05,h:0.22,fill:{color:color},line:{color:color}});
+    slide.addText(text,{x:0.52,y:1.02,w:3,h:0.22,fontSize:8.5,bold:true,color:color,valign:'middle',fontFace:'Calibri',charSpacing:0.8});
+  }
+  function addCard(slide,x,y,w,h,label,value,sub,valColor){
+    slide.addShape(pptx.ShapeType.rect,{x:x,y:y,w:w,h:h,fill:{color:C.grayBg},line:{color:C.border,width:0.75}});
+    slide.addText(label,{x:x+0.12,y:y+0.1,w:w-0.24,h:0.2,fontSize:8,color:'6B7280',fontFace:'Calibri',bold:true,charSpacing:0.3});
+    slide.addText(value||'N/A',{x:x+0.12,y:y+0.32,w:w-0.24,h:0.5,fontSize:22,bold:true,color:valColor||C.darkText,fontFace:'Calibri'});
+    if(sub)slide.addText(sub,{x:x+0.12,y:y+0.85,w:w-0.24,h:0.2,fontSize:8,color:'9CA3AF',fontFace:'Calibri'});
+  }
+  function addWeekBar(slide,isCurrent,label){
+    var bg=isCurrent?C.currBg:C.prevBg;var bd=isCurrent?C.currBorder:C.border;var tc=isCurrent?C.currText:C.prevText;
+    slide.addShape(pptx.ShapeType.rect,{x:0.4,y:1.33,w:12.5,h:0.3,fill:{color:bg},line:{color:bd,width:0.75}});
+    slide.addText((isCurrent?'CURRENT WEEK':'PREVIOUS WEEK')+' • '+label,{x:0.55,y:1.33,w:12,h:0.3,fontSize:10,bold:true,color:tc,fontFace:'Calibri',valign:'middle'});
+  }
+  function addIOSWeekBar(slide,isCurrent,label){
+    var bg=isCurrent?C.iosBg:C.prevBg;var bd=isCurrent?C.iosBorder:C.border;var tc=isCurrent?C.iosText:C.prevText;
+    slide.addShape(pptx.ShapeType.rect,{x:0.4,y:1.33,w:12.5,h:0.3,fill:{color:bg},line:{color:bd,width:0.75}});
+    slide.addText((isCurrent?'CURRENT WEEK':'PREVIOUS WEEK')+' · '+label,{x:0.55,y:1.33,w:12,h:0.3,fontSize:10,bold:true,color:tc,fontFace:'Calibri',valign:'middle'});
+  }
+  function addTitle(slide,title,subtitle){
+    slide.addText(title,{x:0.4,y:0.14,w:11,h:0.42,fontSize:20,bold:true,color:C.darkText,fontFace:'Calibri'});
+    if(subtitle)slide.addText(subtitle,{x:0.4,y:0.58,w:11,h:0.28,fontSize:10,color:'6B7280',fontFace:'Calibri'});
+  }
+  function addNoData(slide,msg){
+    slide.addText(msg||'No data available for selected period',{x:0.4,y:3.2,w:12.5,h:0.5,fontSize:14,color:C.lightText,align:'center',fontFace:'Calibri',italic:true});
+  }
+  // WoW divider setup
+  function addWoWDivider(slide,leftLabel,rightLabel){
+    slide.addShape(pptx.ShapeType.line,{x:6.45,y:1.1,w:0,h:5.9,line:{color:C.border,width:1}});
+    slide.addShape(pptx.ShapeType.rect,{x:0.4,y:1.1,w:5.85,h:0.32,fill:{color:C.currBg},line:{color:C.currBorder,width:0.75}});
+    slide.addText('CURRENT WEEK  '+leftLabel,{x:0.55,y:1.1,w:5.5,h:0.32,fontSize:9,bold:true,color:C.currText,fontFace:'Calibri',valign:'middle'});
+    slide.addShape(pptx.ShapeType.rect,{x:6.65,y:1.1,w:6.25,h:0.32,fill:{color:C.prevBg},line:{color:C.border,width:0.75}});
+    slide.addText('PREVIOUS WEEK  '+rightLabel,{x:6.8,y:1.1,w:5.9,h:0.32,fontSize:9,bold:true,color:C.prevText,fontFace:'Calibri',valign:'middle'});
+  }
+  function addIOSWoWDivider(slide,leftLabel,rightLabel){
+    slide.addShape(pptx.ShapeType.line,{x:6.45,y:1.1,w:0,h:5.9,line:{color:C.border,width:1}});
+    slide.addShape(pptx.ShapeType.rect,{x:0.4,y:1.1,w:5.85,h:0.32,fill:{color:C.iosBg},line:{color:C.iosBorder,width:0.75}});
+    slide.addText('CURRENT WEEK  '+leftLabel,{x:0.55,y:1.1,w:5.5,h:0.32,fontSize:9,bold:true,color:C.iosText,fontFace:'Calibri',valign:'middle'});
+    slide.addShape(pptx.ShapeType.rect,{x:6.65,y:1.1,w:6.25,h:0.32,fill:{color:C.prevBg},line:{color:C.border,width:0.75}});
+    slide.addText('PREVIOUS WEEK  '+rightLabel,{x:6.8,y:1.1,w:5.9,h:0.32,fontSize:9,bold:true,color:C.prevText,fontFace:'Calibri',valign:'middle'});
+  }
+
+  // ── SLIDE 1: COVER ───────────────────────────────────────────
+  wrStatus('Building cover slide…','info');
+  {
+    var s=pptx.addSlide();
+    s.background={color:C.dark};
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.3,h:0.1,fill:{color:C.green},line:{color:C.green}});
+    // Circle icon
+    s.addShape(pptx.ShapeType.ellipse,{x:5.9,y:1.2,w:1.5,h:1.5,fill:{color:'1A2B3C'},line:{color:C.green,width:2}});
+    s.addText('🛒',{x:5.9,y:1.25,w:1.5,h:1.4,fontSize:36,align:'center',valign:'middle'});
+    s.addText('WEEKLY ASO REPORT',{x:0.5,y:2.9,w:12.3,h:0.75,fontSize:36,bold:true,color:C.white,align:'center',fontFace:'Calibri',charSpacing:4});
+    s.addText(gameName,{x:0.5,y:3.75,w:12.3,h:0.5,fontSize:20,bold:true,color:C.green,align:'center',fontFace:'Calibri'});
+    s.addText('Week · '+currLabel,{x:0.5,y:4.35,w:12.3,h:0.4,fontSize:13,color:C.lightText,align:'center',fontFace:'Calibri'});
+    s.addShape(pptx.ShapeType.line,{x:3.5,y:4.9,w:6.3,h:0,line:{color:'2A2D3E',width:0.75}});
+    s.addText('Performance & Stability Overview · Week-over-Week Comparison',{x:0.5,y:5.05,w:12.3,h:0.35,fontSize:11,color:'5A5D6E',align:'center',fontFace:'Calibri',italic:true});
+    s.addText([{text:'ANDROID',options:{color:C.green,bold:true}},{text:'   ·   ',options:{color:'3A3D4E'}},{text:'iOS',options:{color:C.blue,bold:true}}],{x:0.5,y:5.55,w:12.3,h:0.45,fontSize:16,align:'center',fontFace:'Calibri',charSpacing:3});
+    if(weekNum)s.addText('WEEK '+weekNum,{x:0.5,y:6.4,w:12.3,h:0.35,fontSize:10,color:'3A3D4E',align:'center',fontFace:'Calibri',bold:true,charSpacing:4});
+  }
+
+  // ── SLIDE 2: ANDROID SECTION ─────────────────────────────────
+  wrStatus('Android section…','info');
+  {
+    var s=pptx.addSlide();
+    s.background={color:'0D1117'};
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.3,h:0.1,fill:{color:C.green},line:{color:C.green}});
+    s.addText('Android',{x:1,y:1.8,w:9,h:1.6,fontSize:58,bold:true,color:C.white,fontFace:'Calibri'});
+    s.addShape(pptx.ShapeType.rect,{x:1,y:3.55,w:1.4,h:0.08,fill:{color:C.green},line:{color:C.green}});
+    s.addText('Google Play Console performance — health metrics, store listing cvr, and rating distribution.',{x:1,y:3.78,w:10.5,h:0.5,fontSize:13,color:'6B7280',fontFace:'Calibri'});
+    s.addText(gameName+' · Weekly ASO Report',{x:0,y:7.18,w:13.3,h:0.25,fontSize:8.5,color:'3A3D4E',align:'center',italic:true,fontFace:'Calibri'});
+  }
+
+  // ── ANR SLIDES ───────────────────────────────────────────────
+  wrStatus('Building ANR slides…','info');
+  async function addANRSlide(rows,isCurrent,label){
+    var s=pptx.addSlide();
+    addChrome(s,C.red);
+    addTitle(s,'ANR Rate — Android','Application Not Responding incidents (daily vs 28-day rolling avg)');
+    addPlatBadge(s,'ANDROID · STABILITY',C.red);
+    addWeekBar(s,isCurrent,label);
+    var m=calcANR(rows);
+    if(!rows.length){addNoData(s);
+    }else{
+      var img=await captureLightChart({type:'line',data:{labels:rows.map(function(r){return fmtShort(new Date(r.dateObj));}),datasets:[{label:'Daily ANR %',data:rows.map(function(r){return r.daily;}),borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,0.08)',tension:.35,fill:true,pointRadius:0,borderWidth:2.5},{label:'28-day Avg',data:rows.map(function(r){return r.avg28;}),borderColor:'#f59e0b',borderDash:[5,4],tension:.35,fill:false,pointRadius:0,borderWidth:2},{label:'Benchmark 0.47%',data:rows.map(function(){return 0.47;}),borderColor:'#10b981',borderDash:[2,3],fill:false,pointRadius:0,borderWidth:1.5}]},options:lightLineOptions({yPercent:true})});
+      s.addImage({data:img,x:0.4,y:1.73,w:9.5,h:3.3});
+    }
+    if(m){
+      addCard(s,10.1,1.73,3.0,1.3,'AVG ANR RATE',pctFmt(m.avg),'Weekly average',C.red);
+      addCard(s,10.1,3.18,3.0,1.3,'LATEST 28-DAY',pctFmt(m.avg28),'Rolling average',C.darkText);
+      addCard(s,10.1,4.63,3.0,1.3,'BENCHMARK','0.47%','Google Play target',C.amber);
+      var diff=m.avg!=null?(m.avg-0.47):null;
+      if(diff!=null)s.addText((diff>=0?'+':'')+diff.toFixed(2)+'% '+(diff>=0?'over':'under')+' benchmark',{x:10.1,y:6.08,w:3.0,h:0.28,fontSize:9,color:diff>0?C.red:C.green,bold:true,fontFace:'Calibri',align:'center'});
+    }else{addCard(s,10.1,1.73,3.0,1.3,'AVG ANR RATE','N/A','No data',C.lightText);addCard(s,10.1,3.18,3.0,1.3,'LATEST 28-DAY','N/A','',C.lightText);addCard(s,10.1,4.63,3.0,1.3,'BENCHMARK','0.47%','Google Play target',C.amber);}
+  }
+  await addANRSlide(cAnr,true,currLabel);
+  await addANRSlide(pAnr,false,hasPrev?prevLabel:'—');
+  // ANR WoW
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.red);
+    addTitle(s,'ANR Rate — Week over Week','Direct comparison: current week vs previous week');
+    addPlatBadge(s,'ANDROID · STABILITY',C.red);
+    addWoWDivider(s,currLabel,hasPrev?prevLabel:'No previous week set');
+    var mc=calcANR(cAnr),mp=calcANR(pAnr);
+    var rows2=[{x:0.4,m:mc},{x:6.65,m:mp}];
+    rows2.forEach(function(r){
+      var w=5.85;
+      if(r.m){addCard(s,r.x,1.55,w,1.25,'AVG ANR RATE',pctFmt(r.m.avg),'Weekly average',C.red);addCard(s,r.x,2.95,w,1.25,'LATEST 28-DAY',pctFmt(r.m.avg28),'Rolling average',C.darkText);addCard(s,r.x,4.35,w,1.25,'BENCHMARK','0.47%','Google Play target',C.amber);}
+      else{addCard(s,r.x,1.55,w,1.25,'AVG ANR RATE','N/A','No data','9CA3AF');addCard(s,r.x,2.95,w,1.25,'LATEST 28-DAY','N/A','','9CA3AF');addCard(s,r.x,4.35,w,1.25,'BENCHMARK','0.47%','Google Play target',C.amber);}
+    });
+  }
+
+  // ── CRASH SLIDES ─────────────────────────────────────────────
+  wrStatus('Building Crash slides…','info');
+  async function addCrashSlide(rows,isCurrent,label){
+    var s=pptx.addSlide();
+    addChrome(s,C.purple);
+    addTitle(s,'Crash Rate — Android','User-perceived crashes vs benchmark');
+    addPlatBadge(s,'ANDROID · STABILITY',C.purple);
+    addWeekBar(s,isCurrent,label);
+    var m=calcANR(rows); // same calc
+    if(!rows.length){addNoData(s);}
+    else{
+      var img=await captureLightChart({type:'line',data:{labels:rows.map(function(r){return fmtShort(new Date(r.dateObj));}),datasets:[{label:'Daily Crash %',data:rows.map(function(r){return r.daily;}),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,0.08)',tension:.35,fill:true,pointRadius:0,borderWidth:2.5},{label:'28-day Avg',data:rows.map(function(r){return r.avg28;}),borderColor:'#f59e0b',borderDash:[5,4],tension:.35,fill:false,pointRadius:0,borderWidth:2},{label:'Benchmark 1.09%',data:rows.map(function(){return 1.09;}),borderColor:'#10b981',borderDash:[2,3],fill:false,pointRadius:0,borderWidth:1.5}]},options:lightLineOptions({yPercent:true})});
+      s.addImage({data:img,x:0.4,y:1.73,w:9.5,h:3.3});
+    }
+    if(m){addCard(s,10.1,1.73,3.0,1.3,'AVG CRASH RATE',pctFmt(m.avg),'Weekly average',C.purple);addCard(s,10.1,3.18,3.0,1.3,'LATEST 28-DAY',pctFmt(m.avg28),'Rolling average',C.darkText);addCard(s,10.1,4.63,3.0,1.3,'BENCHMARK','1.09%','Google Play target',C.amber);}
+    else{addCard(s,10.1,1.73,3.0,1.3,'AVG CRASH RATE','N/A','No data',C.lightText);addCard(s,10.1,3.18,3.0,1.3,'LATEST 28-DAY','N/A','','9CA3AF');addCard(s,10.1,4.63,3.0,1.3,'BENCHMARK','1.09%','Google Play target',C.amber);}
+  }
+  await addCrashSlide(cCrash,true,currLabel);
+  await addCrashSlide(pCrash,false,hasPrev?prevLabel:'—');
+  // Crash WoW
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.purple);
+    addTitle(s,'Crash Rate — Week over Week','Direct comparison: current week vs previous week');
+    addPlatBadge(s,'ANDROID · STABILITY',C.purple);
+    addWoWDivider(s,currLabel,hasPrev?prevLabel:'No previous week set');
+    var mc=calcANR(cCrash),mp=calcANR(pCrash);
+    [{x:0.4,m:mc},{x:6.65,m:mp}].forEach(function(r){
+      var w=5.85;
+      if(r.m){addCard(s,r.x,1.55,w,1.25,'AVG CRASH RATE',pctFmt(r.m.avg),'Weekly average',C.purple);addCard(s,r.x,2.95,w,1.25,'LATEST 28-DAY',pctFmt(r.m.avg28),'Rolling average',C.darkText);addCard(s,r.x,4.35,w,1.25,'BENCHMARK','1.09%','Google Play target',C.amber);}
+      else{addCard(s,r.x,1.55,w,1.25,'AVG CRASH RATE','N/A','No data','9CA3AF');addCard(s,r.x,2.95,w,1.25,'LATEST 28-DAY','N/A','','9CA3AF');addCard(s,r.x,4.35,w,1.25,'BENCHMARK','1.09%','Google Play target',C.amber);}
+    });
+  }
+
+  // ── STORE LISTING CVR (EXPLORE) ──────────────────────────────
+  wrStatus('Building CVR slides…','info');
+  async function addCVRSlide(explRows,adsRows,isCurrent,label){
+    var s=pptx.addSlide();
+    addChrome(s,C.green);
+    addTitle(s,'Store Listing — Google Play','Visitors, Converters, and Conversion Rate (Explore traffic)');
+    addPlatBadge(s,'ANDROID · ACQUISITION',C.green);
+    addWeekBar(s,isCurrent,label);
+    var chartRows=explRows.length?explRows:(adsRows.length?adsRows:[]);
+    var m=calcCVR(chartRows);
+    if(!chartRows.length){addNoData(s);}
+    else{
+      var img=await captureLightChart({type:'line',data:{labels:chartRows.map(function(r){return fmtShort(new Date(r.dateObj));}),datasets:[{label:'Visitors',data:chartRows.map(function(r){return r.visitors;}),borderColor:'#22c55e',tension:.35,fill:false,pointRadius:0,borderWidth:2.5,yAxisID:'y'},{label:'Converters',data:chartRows.map(function(r){return r.converters;}),borderColor:'#10b981',tension:.35,fill:false,pointRadius:0,borderWidth:2,yAxisID:'y'},{label:'CVR %',data:chartRows.map(function(r){return cvrPct(r.cvr);}),borderColor:'#3b82f6',borderDash:[5,4],tension:.35,fill:false,pointRadius:0,borderWidth:2,yAxisID:'y2'}]},options:Object.assign({},lightLineOptions(),{scales:Object.assign({},lightLineOptions().scales,{y2:{position:'right',min:0,grid:{display:false},ticks:{color:'#3b82f6',font:{size:11},callback:function(v){return v.toFixed(1)+'%';}}}})})});
+      s.addImage({data:img,x:0.4,y:1.73,w:12.5,h:3.35});
+    }
+    addCard(s,0.4,5.22,3.9,1.28,'VISITORS',m?numFmt(m.visitors):'N/A','Explore traffic',C.green);
+    addCard(s,4.5,5.22,3.9,1.28,'CONVERTERS',m?numFmt(m.converters):'N/A','Installs',C.green);
+    addCard(s,8.6,5.22,4.3,1.28,'AVG CVR',m?pctFmt(m.cvr):'N/A','Conversion %',C.green);
+  }
+  await addCVRSlide(cExp,cAds,true,currLabel);
+  await addCVRSlide(pExp,pAds,false,hasPrev?prevLabel:'—');
+  // CVR WoW
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.green);
+    addTitle(s,'Store Listing CVR — Week over Week','Direct comparison: current week vs previous week');
+    addPlatBadge(s,'ANDROID · ACQUISITION',C.green);
+    addWoWDivider(s,currLabel,hasPrev?prevLabel:'No previous week set');
+    var mc=calcCVR(cExp.length?cExp:cAds),mp=calcCVR(pExp.length?pExp:pAds);
+    [{x:0.4,m:mc},{x:6.65,m:mp}].forEach(function(r){
+      var w=5.85;
+      if(r.m){addCard(s,r.x,1.55,w,1.25,'VISITORS',numFmt(r.m.visitors),'Explore traffic',C.green);addCard(s,r.x,2.95,w,1.25,'CONVERTERS',numFmt(r.m.converters),'Installs',C.green);addCard(s,r.x,4.35,w,1.25,'AVG CVR %',pctFmt(r.m.cvr),'Conversion %',C.green);}
+      else{addCard(s,r.x,1.55,w,1.25,'VISITORS','N/A','No data','9CA3AF');addCard(s,r.x,2.95,w,1.25,'CONVERTERS','N/A','','9CA3AF');addCard(s,r.x,4.35,w,1.25,'AVG CVR %','N/A','','9CA3AF');}
+    });
+  }
+
+  // ── RATINGS SLIDES ───────────────────────────────────────────
+  wrStatus('Building Ratings slides…','info');
+  async function addRatingsSlide(rows,isCurrent,label){
+    var s=pptx.addSlide();
+    addChrome(s,C.amber);
+    addTitle(s,'Ratings — Google Play','Daily rating distribution (5★ to 1★)');
+    addPlatBadge(s,'ANDROID · USER FEEDBACK',C.amber);
+    addWeekBar(s,isCurrent,label);
+    var m=calcRat(rows);
+    if(!rows.length){addNoData(s);}
+    else{
+      var img=await captureLightChart({type:'bar',data:{labels:rows.map(function(r){return fmtShort(new Date(r.dateObj));}),datasets:[{label:'5★',data:rows.map(function(r){return r.s5||0;}),backgroundColor:'#10b981',stack:'s'},{label:'4★',data:rows.map(function(r){return r.s4||0;}),backgroundColor:'#86efac',stack:'s'},{label:'3★',data:rows.map(function(r){return r.s3||0;}),backgroundColor:'#9ca3af',stack:'s'},{label:'2★',data:rows.map(function(r){return r.s2||0;}),backgroundColor:'#f59e0b',stack:'s'},{label:'1★',data:rows.map(function(r){return r.s1||0;}),backgroundColor:'#dc2626',stack:'s'}]},options:{responsive:false,maintainAspectRatio:false,animation:false,plugins:{legend:{labels:{color:'#374151',font:{size:11},padding:10}}},scales:{x:{stacked:true,grid:{color:'#f3f4f6'},ticks:{color:'#6b7280',font:{size:10},maxTicksLimit:16,autoSkip:true}},y:{stacked:true,grid:{color:'#f3f4f6'},ticks:{color:'#6b7280',font:{size:10},callback:function(v){return numFmt(v);}},beginAtZero:true}}}});
+      s.addImage({data:img,x:0.4,y:1.73,w:12.5,h:3.35});
+    }
+    if(m){
+      addCard(s,0.4,5.22,3.0,1.28,'AVG RATING',m.avg?m.avg.toFixed(2)+' ★':'N/A','Weighted star rating',C.amber);
+      addCard(s,3.6,5.22,3.0,1.28,'TOTAL RATINGS',numFmt(m.total),'Volume',C.blue);
+      addCard(s,6.8,5.22,3.0,1.28,'5★ RATIO',m.r5?m.r5.toFixed(1)+'%':'N/A','Share of 5-star',C.green);
+      addCard(s,10.0,5.22,3.0,1.28,'1★ RATIO',m.r1?m.r1.toFixed(1)+'%':'N/A','Share of 1-star',C.red);
+    }else{
+      addCard(s,0.4,5.22,3.0,1.28,'AVG RATING','N/A','Weighted star rating',C.amber);
+      addCard(s,3.6,5.22,3.0,1.28,'TOTAL RATINGS','N/A','Volume',C.blue);
+      addCard(s,6.8,5.22,3.0,1.28,'5★ RATIO','N/A','Share of 5-star','9CA3AF');
+      addCard(s,10.0,5.22,3.0,1.28,'1★ RATIO','N/A','Share of 1-star','9CA3AF');
+    }
+  }
+  await addRatingsSlide(cRat,true,currLabel);
+  await addRatingsSlide(pRat,false,hasPrev?prevLabel:'—');
+  // Ratings WoW
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.amber);
+    addTitle(s,'Ratings — Week over Week','Direct comparison: current week vs previous week');
+    addPlatBadge(s,'ANDROID · USER FEEDBACK',C.amber);
+    addWoWDivider(s,currLabel,hasPrev?prevLabel:'No previous week set');
+    var mc=calcRat(cRat),mp=calcRat(pRat);
+    [{x:0.4,m:mc},{x:6.65,m:mp}].forEach(function(r){
+      var w=2.7,w2=2.8;
+      if(r.m){
+        addCard(s,r.x,1.55,w,1.2,'AVG RATING',r.m.avg?r.m.avg.toFixed(2)+' ★':'N/A','',C.amber);
+        addCard(s,r.x+w+0.15,1.55,w2,1.2,'TOTAL RATINGS',numFmt(r.m.total),'',C.blue);
+        addCard(s,r.x,2.9,w,1.2,'5★ RATIO',r.m.r5?r.m.r5.toFixed(1)+'%':'N/A','',C.green);
+        addCard(s,r.x+w+0.15,2.9,w2,1.2,'1★ RATIO',r.m.r1?r.m.r1.toFixed(1)+'%':'N/A','',C.red);
+      }else{
+        addCard(s,r.x,1.55,w,1.2,'AVG RATING','N/A','',C.amber);
+        addCard(s,r.x+w+0.15,1.55,w2,1.2,'TOTAL RATINGS','N/A','',C.blue);
+        addCard(s,r.x,2.9,w,1.2,'5★ RATIO','N/A','',C.green);
+        addCard(s,r.x+w+0.15,2.9,w2,1.2,'1★ RATIO','N/A','',C.red);
+      }
+    });
+  }
+
+  // ── A/B TESTING (Android) ────────────────────────────────────
+  wrStatus('Building A/B Testing slides…','info');
+  {
+    var abtests=loadABTests();
+    var activeTest=abtests.find(function(t){return t.status==='Live';})||abtests[0];
+    if(activeTest){
+      // Current listing + result slide
+      var variants=activeTest.variants||[];
+      var resultImgs=activeTest.resultImages||[];
+      // Result slide
+      {
+        var s=pptx.addSlide();
+        addChrome(s,C.blue);
+        addTitle(s,'A/B Testing','Current Listing');
+        addPlatBadge(s,'ANDROID',C.blue);
+        var stColor=activeTest.status==='Live'?C.blue:(activeTest.status==='Completed'?C.green:C.amber);
+        s.addShape(pptx.ShapeType.rect,{x:10.4,y:0.12,w:2.5,h:0.32,fill:{color:stColor},line:{color:stColor}});
+        s.addText('Result: '+activeTest.status,{x:10.4,y:0.12,w:2.5,h:0.32,fontSize:9,bold:true,color:C.white,align:'center',valign:'middle',fontFace:'Calibri'});
+        s.addText(activeTest.name,{x:0.4,y:1.1,w:12.5,h:0.35,fontSize:13,bold:true,color:C.blue,fontFace:'Calibri'});
+        s.addText((activeTest.startDate||'—')+(activeTest.endDate?' → '+activeTest.endDate:' (ongoing)'),{x:0.4,y:1.5,w:12.5,h:0.25,fontSize:9,color:'6B7280',fontFace:'Calibri'});
+        // Result images
+        if(resultImgs.length){
+          resultImgs.slice(0,2).forEach(function(ri,idx){
+            s.addImage({data:ri.image,x:0.4+idx*6.5,y:1.85,w:6.2,h:4.3,sizing:{type:'contain',w:6.2,h:4.3}});
+            s.addText(ri.label||'Result '+(idx+1),{x:0.4+idx*6.5,y:6.2,w:6.2,h:0.28,fontSize:9,color:'374151',align:'center',fontFace:'Calibri'});
+          });
+        }else{
+          s.addShape(pptx.ShapeType.rect,{x:0.4,y:1.85,w:12.5,h:4.3,fill:{color:'F3F4F6'},line:{color:C.border,width:0.75}});
+          s.addText('No result screenshots uploaded',{x:0.4,y:3.8,w:12.5,h:0.4,fontSize:12,color:'AAAAAA',align:'center',fontFace:'Calibri',italic:true});
+        }
+      }
+      // Variant slides (one slide per variant, max 4)
+      variants.slice(0,4).forEach(function(v,vi){
+        var s=pptx.addSlide();
+        addChrome(s,C.blue);
+        addTitle(s,'A/B Testing','('+activeTest.name+')');
+        addPlatBadge(s,'ANDROID',C.blue);
+        s.addShape(pptx.ShapeType.rect,{x:0.4,y:1.05,w:0.05,h:0.22,fill:{color:vi===0?C.blue:'6B7280'},line:{color:vi===0?C.blue:'6B7280'}});
+        s.addText(vi===0?'Current Listing':'Variant '+String.fromCharCode(64+vi),{x:0.52,y:1.04,w:3,h:0.22,fontSize:8.5,bold:true,color:vi===0?C.blue:'6B7280',valign:'middle',fontFace:'Calibri',charSpacing:0.8});
+        s.addText((v.label||('Variant '+(vi+1))),{x:3.6,y:1.04,w:9,h:0.22,fontSize:8.5,color:'374151',fontFace:'Calibri',valign:'middle'});
+        var imgs=v.images||[];
+        if(imgs.length){
+          var vw=Math.min(3.2,(12.5/Math.min(imgs.length,4))-0.15);
+          imgs.slice(0,4).forEach(function(img,ii){
+            s.addImage({data:img,x:0.4+ii*(vw+0.15),y:1.35,w:vw,h:5.8,sizing:{type:'contain',w:vw,h:5.8}});
+          });
+        }else{
+          s.addShape(pptx.ShapeType.rect,{x:0.4,y:1.35,w:12.5,h:5.6,fill:{color:'F3F4F6'},line:{color:C.border,width:0.75}});
+          s.addText('No screenshots uploaded for this variant',{x:0.4,y:4.0,w:12.5,h:0.5,fontSize:12,color:'AAAAAA',align:'center',fontFace:'Calibri',italic:true});
+        }
+      });
+    }
+  }
+
+  // ── iOS SECTION ──────────────────────────────────────────────
+  wrStatus('iOS section…','info');
+  {
+    var s=pptx.addSlide();
+    s.background={color:'0D1117'};
+    s.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.3,h:0.1,fill:{color:C.blue},line:{color:C.blue}});
+    s.addText('iOS',{x:1,y:1.8,w:8,h:1.6,fontSize:58,bold:true,color:C.white,fontFace:'Calibri'});
+    s.addShape(pptx.ShapeType.rect,{x:1,y:3.55,w:0.9,h:0.08,fill:{color:C.blue},line:{color:C.blue}});
+    s.addText('App Store Connect performance — crash rate and conversion rate by source type.',{x:1,y:3.78,w:10.5,h:0.5,fontSize:13,color:'6B7280',fontFace:'Calibri'});
+    s.addText(gameName+' · Weekly ASO Report',{x:0,y:7.18,w:13.3,h:0.25,fontSize:8.5,color:'3A3D4E',align:'center',italic:true,fontFace:'Calibri'});
+  }
+
+  // ── iOS CRASH SLIDES ─────────────────────────────────────────
+  wrStatus('Building iOS Crash slides…','info');
+  async function addIOSCrashSlide(rows,isCurrent,label){
+    var s=pptx.addSlide();
+    addChrome(s,C.purple);
+    addTitle(s,'Crash Rate — iOS','MSS iOS crashes vs sessions (daily count and rate)');
+    addPlatBadge(s,'iOS · STABILITY',C.blue);
+    addIOSWeekBar(s,isCurrent,label);
+    var m=calcIOSCrash(rows);
+    if(!rows.length){addNoData(s);}
+    else{
+      var img=await captureLightChart({type:'line',data:{labels:rows.map(function(r){return fmtShort(new Date(r.dateObj));}),datasets:[{label:'Crashes',data:rows.map(function(r){return r.crashes;}),borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,0.08)',tension:.35,fill:true,pointRadius:0,borderWidth:2.5,yAxisID:'y'},{label:'Crash Rate %',data:rows.map(function(r){return r.rate;}),borderColor:'#7c3aed',borderDash:[5,4],tension:.35,fill:false,pointRadius:0,borderWidth:2,yAxisID:'y2'}]},options:Object.assign({},lightLineOptions(),{scales:Object.assign({},lightLineOptions().scales,{y2:{position:'right',min:0,grid:{display:false},ticks:{color:'#7c3aed',font:{size:11},callback:function(v){return v.toFixed(3)+'%';}}}})})});
+      s.addImage({data:img,x:0.4,y:1.73,w:12.5,h:3.35});
+    }
+    addCard(s,0.4,5.22,4.0,1.28,'AVG CRASH RATE',m&&m.rate!=null?m.rate.toFixed(4)+'%':'N/A','Crashes ÷ Sessions',C.purple);
+    addCard(s,4.6,5.22,4.0,1.28,'TOTAL CRASHES',m?numFmt(m.crashes):'N/A','This week',C.red);
+    addCard(s,8.8,5.22,4.1,1.28,'TOTAL SESSIONS',m?numFmt(m.sessions):'N/A','All users',C.darkText);
+  }
+  await addIOSCrashSlide(cIOSCrash,true,currLabel);
+  await addIOSCrashSlide(pIOSCrash,false,hasPrev?prevLabel:'—');
+  // iOS Crash WoW
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.purple);
+    addTitle(s,'iOS Crash Rate — Week over Week','Direct comparison: current week vs previous week');
+    addPlatBadge(s,'iOS · STABILITY',C.blue);
+    addIOSWoWDivider(s,currLabel,hasPrev?prevLabel:'No previous week set');
+    var mc=calcIOSCrash(cIOSCrash),mp=calcIOSCrash(pIOSCrash);
+    [{x:0.4,m:mc},{x:6.65,m:mp}].forEach(function(r){
+      var w=5.85;
+      if(r.m){addCard(s,r.x,1.55,w,1.25,'AVG CRASH RATE',r.m.rate!=null?r.m.rate.toFixed(4)+'%':'N/A','Crashes ÷ Sessions',C.purple);addCard(s,r.x,2.95,w,1.25,'TOTAL CRASHES',numFmt(r.m.crashes),'This week',C.red);addCard(s,r.x,4.35,w,1.25,'TOTAL SESSIONS',numFmt(r.m.sessions),'All users',C.darkText);}
+      else{addCard(s,r.x,1.55,w,1.25,'AVG CRASH RATE','N/A','No data','9CA3AF');addCard(s,r.x,2.95,w,1.25,'TOTAL CRASHES','N/A','','9CA3AF');addCard(s,r.x,4.35,w,1.25,'TOTAL SESSIONS','N/A','','9CA3AF');}
+    });
+  }
+
+  // ── iOS CONVERSION SLIDES ────────────────────────────────────
+  wrStatus('Building iOS Conversion slides…','info');
+  async function addIOSConvSlide(db,from,to,isCurrent,label){
+    var s=pptx.addSlide();
+    addChrome(s,C.blue);
+    addTitle(s,'App Store Conversion — iOS','Daily conversion rate by source type (Search · Referrer · Browse)');
+    addPlatBadge(s,'iOS · ACQUISITION',C.blue);
+    addIOSWeekBar(s,isCurrent,label);
+    var conv=calcIOSConv(db,from,to);
+    var hasData=Object.values(conv).some(function(v){return v!=null;});
+    if(!hasData){addNoData(s);}
+    else{
+      // Simple line chart with source CVRs
+      var ir=_repFilt(Object.values(db.impr||{}).sort(function(a,b){return new Date(a.dateObj)-new Date(b.dateObj);}),from,to);
+      var dr=_repFilt(Object.values(db.dl||{}).sort(function(a,b){return new Date(a.dateObj)-new Date(b.dateObj);}),from,to);
+      if(ir.length&&dr.length){
+        var img=await captureLightChart({type:'line',data:{labels:ir.map(function(r){return fmtShort(new Date(r.dateObj));}),datasets:[{label:'Search CVR',data:ir.map(function(r,i){var d=dr[i];var iv=+r.search||0;var dv=d?(+d.search||0):0;return iv?(dv/iv*100):null;}),borderColor:'#3b82f6',tension:.35,fill:false,pointRadius:0,borderWidth:2.5},{label:'Browse CVR',data:ir.map(function(r,i){var d=dr[i];var iv=+r.browse||0;var dv=d?(+d.browse||0):0;return iv?(dv/iv*100):null;}),borderColor:'#f59e0b',tension:.35,fill:false,pointRadius:0,borderWidth:2},{label:'App Referrer CVR',data:ir.map(function(r,i){var d=dr[i];var iv=+r.appref||0;var dv=d?(+d.appref||0):0;return iv?(dv/iv*100):null;}),borderColor:'#10b981',tension:.35,fill:false,pointRadius:0,borderWidth:2}]},options:lightLineOptions({yPercent:true})});
+        s.addImage({data:img,x:0.4,y:1.73,w:12.5,h:3.35});
+      }
+    }
+    addCard(s,0.4,5.22,3.9,1.28,'APP STORE SEARCH',conv.search!=null?pctFmt(conv.search):'N/A','Top channel',C.blue);
+    addCard(s,4.5,5.22,3.9,1.28,'APP REFERRER',conv.appref!=null?pctFmt(conv.appref):'N/A','External traffic',C.blue);
+    addCard(s,8.6,5.22,4.3,1.28,'APP STORE BROWSE',conv.browse!=null?pctFmt(conv.browse):'N/A','Discovery',C.blue);
+  }
+  await addIOSConvSlide(iosDB,currFrom,currTo,true,currLabel);
+  await addIOSConvSlide(iosDB,prevFrom,prevTo,false,hasPrev?prevLabel:'—');
+  // iOS Conv WoW
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.blue);
+    addTitle(s,'iOS Conversion — Week over Week','Direct comparison: current week vs previous week');
+    addPlatBadge(s,'iOS · ACQUISITION',C.blue);
+    addIOSWoWDivider(s,currLabel,hasPrev?prevLabel:'No previous week set');
+    var mc=calcIOSConv(iosDB,currFrom,currTo),mp=hasPrev?calcIOSConv(iosDB,prevFrom,prevTo):{};
+    [{x:0.4,c:mc},{x:6.65,c:mp}].forEach(function(r){
+      var w=5.85;
+      addCard(s,r.x,1.55,w,1.25,'APP STORE SEARCH CVR',r.c.search!=null?pctFmt(r.c.search):'N/A','Top channel',C.blue);
+      addCard(s,r.x,2.95,w,1.25,'APP REFERRER CVR',r.c.appref!=null?pctFmt(r.c.appref):'N/A','External traffic',C.blue);
+      addCard(s,r.x,4.35,w,1.25,'APP STORE BROWSE CVR',r.c.browse!=null?pctFmt(r.c.browse):'N/A','Discovery',C.blue);
+    });
+  }
+
+  // ── iOS RATINGS ──────────────────────────────────────────────
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.amber);
+    addTitle(s,'Ratings — App Store','');
+    addPlatBadge(s,'iOS · USER FEEDBACK',C.blue);
+    var iosImgs=loadIOSReviewImages();
+    if(iosImgs.length){
+      s.addImage({data:iosImgs[0].data,x:0.4,y:1.15,w:12.5,h:5.2,sizing:{type:'contain',w:12.5,h:5.2}});
+    }else{
+      s.addShape(pptx.ShapeType.rect,{x:0.4,y:1.15,w:12.5,h:5.2,fill:{color:'F3F4F6'},line:{color:C.border,width:0.75}});
+      s.addText('[ INSERT APP STORE RATINGS SCREENSHOT HERE ]',{x:0.4,y:3.6,w:12.5,h:0.5,fontSize:11,color:'AAAAAA',align:'center',fontFace:'Calibri',italic:true});
+      s.addText('Upload screenshot in iOS tab → Ratings & Reviews first',{x:0.4,y:4.2,w:12.5,h:0.3,fontSize:9,color:'AAAAAA',align:'center',fontFace:'Calibri'});
+    }
+    addCard(s,0.4,6.45,3.0,0.85,'AVG RATING',iosImgs.length?'—':'N/A','Weighted star rating',C.amber);
+    addCard(s,3.6,6.45,3.0,0.85,'TOTAL RATINGS',iosImgs.length?'—':'N/A','Volume',C.blue);
+    addCard(s,6.8,6.45,3.0,0.85,'5★ RATIO',iosImgs.length?'—':'N/A','Share of 5-star',C.green);
+    addCard(s,10.0,6.45,3.0,0.85,'1★ RATIO',iosImgs.length?'—':'N/A','Share of 1-star',C.red);
+  }
+
+  // ── iOS A/B TESTING ──────────────────────────────────────────
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.blue);
+    addTitle(s,'A/B Testing — iOS','(Changed 4th Screenshot)');
+    addPlatBadge(s,'iOS',C.blue);
+    s.addShape(pptx.ShapeType.rect,{x:0.4,y:1.15,w:12.5,h:5.2,fill:{color:'F9FAFB'},line:{color:C.border,width:0.75}});
+    s.addText('Result = ______',{x:0.4,y:2.9,w:12.5,h:0.5,fontSize:14,color:'E5A000',align:'center',fontFace:'Calibri',bold:true});
+    s.addText('Insert App Store Connect A/B test screenshot here',{x:0.4,y:3.5,w:12.5,h:0.4,fontSize:11,color:'AAAAAA',align:'center',fontFace:'Calibri',italic:true});
+  }
+
+  // ── SUMMARY SLIDE ─────────────────────────────────────────────
+  wrStatus('Building summary slide…','info');
+  {
+    var s=pptx.addSlide();
+    addChrome(s,C.green);
+    addTitle(s,'Week '+(weekNum||'')+' — Summary','Key takeaways across Android & iOS performance · Week-over-Week');
+    s.addShape(pptx.ShapeType.line,{x:6.45,y:0.97,w:0,h:5.9,line:{color:C.border,width:0.75}});
+    // Column headers
+    s.addShape(pptx.ShapeType.rect,{x:0.4,y:0.97,w:5.85,h:0.32,fill:{color:C.currBg},line:{color:C.green,width:1}});
+    s.addText('ANDROID',{x:0.55,y:0.97,w:5.5,h:0.32,fontSize:12,bold:true,color:C.darkText,fontFace:'Calibri',valign:'middle',charSpacing:3});
+    s.addShape(pptx.ShapeType.rect,{x:6.65,y:0.97,w:6.25,h:0.32,fill:{color:C.iosBg},line:{color:C.blue,width:1}});
+    s.addText('iOS',{x:6.8,y:0.97,w:5.9,h:0.32,fontSize:12,bold:true,color:C.darkText,fontFace:'Calibri',valign:'middle',charSpacing:3});
+    // Android metrics
+    var anrMC=calcANR(cAnr),anrMP=calcANR(pAnr);
+    var crMC=calcANR(cCrash),crMP=calcANR(pCrash);
+    var cvrMC=calcCVR(cExp.length?cExp:cAds),cvrMP=calcCVR(pExp.length?pExp:pAds);
+    var ratMC=calcRat(cRat),ratMP=calcRat(pRat);
+    function sumCard(s,x,y,w,label,curr,prev,color){
+      s.addShape(pptx.ShapeType.rect,{x:x,y:y,w:w,h:1.18,fill:{color:'FFFFFF'},line:{color:C.border,width:0.75}});
+      s.addShape(pptx.ShapeType.rect,{x:x,y:y,w:0.05,h:1.18,fill:{color:color},line:{color:color}});
+      s.addText(label,{x:x+0.13,y:y+0.1,w:w-0.18,h:0.2,fontSize:8,color:'6B7280',fontFace:'Calibri',bold:true,charSpacing:0.3});
+      s.addText(curr||'N/A',{x:x+0.13,y:y+0.32,w:w-0.18,h:0.45,fontSize:21,bold:true,color:color,fontFace:'Calibri'});
+      if(prev)s.addText('Last Week '+prev,{x:x+0.13,y:y+0.88,w:w-0.18,h:0.22,fontSize:8.5,color:'9CA3AF',fontFace:'Calibri'});
+    }
+    sumCard(s,0.4,1.38,5.85,'ANR RATE (AVG)',anrMC?pctFmt(anrMC.avg):'N/A',anrMP?pctFmt(anrMP.avg):null,C.red);
+    sumCard(s,0.4,2.67,5.85,'CRASH RATE (AVG)',crMC?pctFmt(crMC.avg):'N/A',crMP?pctFmt(crMP.avg):null,C.purple);
+    sumCard(s,0.4,3.96,5.85,'AVG CVR (EXPLORE)',cvrMC?pctFmt(cvrMC.cvr):'N/A',cvrMP?pctFmt(cvrMP.cvr):null,C.green);
+    sumCard(s,0.4,5.25,5.85,'AVG RATING',ratMC&&ratMC.avg?ratMC.avg.toFixed(2)+' ★':'N/A',ratMP&&ratMP.avg?ratMP.avg.toFixed(2)+' ★':null,C.amber);
+    // iOS metrics
+    var iosMC=calcIOSCrash(cIOSCrash),iosMP=calcIOSCrash(pIOSCrash);
+    var iosCC=calcIOSConv(iosDB,currFrom,currTo),iosCP=hasPrev?calcIOSConv(iosDB,prevFrom,prevTo):{};
+    sumCard(s,6.65,1.38,6.25,'CRASH RATE (AVG)',iosMC&&iosMC.rate!=null?iosMC.rate.toFixed(4)+'%':'N/A',iosMP&&iosMP.rate!=null?iosMP.rate.toFixed(4)+'%':null,C.purple);
+    sumCard(s,6.65,2.67,6.25,'APP STORE SEARCH CVR',iosCC.search!=null?pctFmt(iosCC.search):'N/A',iosCP.search!=null?pctFmt(iosCP.search):null,C.blue);
+    sumCard(s,6.65,3.96,6.25,'APP STORE BROWSE CVR',iosCC.browse!=null?pctFmt(iosCC.browse):'N/A',iosCP.browse!=null?pctFmt(iosCP.browse):null,C.blue);
+    sumCard(s,6.65,5.25,6.25,'AVG RATING (APP STORE)','See iOS Ratings slide',null,C.amber);
+  }
+
+  // ── Save ─────────────────────────────────────────────────────
+  wrStatus('Saving PPTX…','info');
+  var safeName=gameName.replace(/[^a-z0-9]/gi,'_');
+  var fn=safeName+'_ASO_Report'+(weekNum?'_Week'+weekNum:'')+'_'+currFrom+'.pptx';
+  await pptx.writeFile({fileName:fn});
+}
+
+
+
+// ── WR UI helpers ────────────────────────────────────────────
+function wrAutoSetPrev(){autoSetPrevWeek();}
+function wrClearDates(){
+  ['wr-curr-from','wr-curr-to','wr-prev-from','wr-prev-to','wr-week-num'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('wr-preview-panel').style.display='none';
+  var btn=document.getElementById('wr-download-btn');
+  if(btn){btn.disabled=true;btn.style.opacity='.45';btn.style.cursor='not-allowed';}
+  wrHideStatus();
+}
+function wrHideStatus(){var el=document.getElementById('wr-status');if(el)el.style.display='none';}
+
+// ── Slide preview builder ────────────────────────────────────
+async function wrPreview(){
+  if(typeof PptxGenJS==='undefined'){wrStatus('PptxGenJS not loaded — check internet','error');return;}
+  var currFrom=document.getElementById('wr-curr-from').value;
+  var currTo=document.getElementById('wr-curr-to').value;
+  if(!currFrom||!currTo){wrStatus('Please select Current Week dates first','error');return;}
+  var btn=document.getElementById('wr-preview-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Building preview…';}
+  wrStatus('Building slide previews…','info');
+  try{
+    var slides=await wrBuildSlideList(currFrom,currTo,
+      document.getElementById('wr-prev-from').value,
+      document.getElementById('wr-prev-to').value,
+      document.getElementById('wr-week-num').value||'');
+    var panel=document.getElementById('wr-preview-panel');
+    var container=document.getElementById('wr-preview-slides');
+    var countEl=document.getElementById('wr-slide-count');
+    container.innerHTML='';
+    countEl.textContent=slides.length+' slides';
+    slides.forEach(function(sl,i){
+      var div=document.createElement('div');
+      div.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;';
+      var num=document.createElement('div');
+      num.style.cssText='min-width:28px;height:28px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;font-size:11px;font-weight:700;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+      num.textContent=i+1;
+      var info=document.createElement('div');
+      var title=document.createElement('div');
+      title.style.cssText='font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px;';
+      title.textContent=sl.title;
+      var sub=document.createElement('div');
+      sub.style.cssText='font-size:11px;color:var(--text3);';
+      sub.textContent=sl.sub;
+      info.appendChild(title);info.appendChild(sub);
+      div.appendChild(num);div.appendChild(info);
+      container.appendChild(div);
+    });
+    panel.style.display='';
+    var dlBtn=document.getElementById('wr-download-btn');
+    if(dlBtn){dlBtn.disabled=false;dlBtn.style.opacity='1';dlBtn.style.cursor='pointer';}
+    wrStatus('✅ Preview ready — '+slides.length+' slides. Click Download PPTX when ready.','success');
+  }catch(e){
+    wrStatus('❌ Preview error: '+e.message,'error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='👁 Preview Slides';}
+  }
+}
+
+async function wrBuildSlideList(currFrom,currTo,prevFrom,prevTo,weekNum){
+  var hasPrev=!!(prevFrom&&prevTo);
+  var cLabel=fmtLong(new Date(currFrom))+' — '+fmtLong(new Date(currTo));
+  var pLabel=hasPrev?fmtLong(new Date(prevFrom))+' — '+fmtLong(new Date(prevTo)):'—';
+  var wk=weekNum?'Week '+weekNum:'';
+  var slides=[
+    {title:'Cover Slide',sub:getCurrentGame().name+(wk?' · '+wk:'')+' · '+cLabel},
+    {title:'Android — Section Divider',sub:'Google Play Console'},
+    {title:'ANR Rate — Current Week',sub:cLabel},
+    {title:'ANR Rate — Previous Week',sub:pLabel},
+    {title:'ANR Rate — Week over Week',sub:'Current vs Previous comparison'},
+    {title:'Crash Rate — Current Week',sub:cLabel},
+    {title:'Crash Rate — Previous Week',sub:pLabel},
+    {title:'Crash Rate — Week over Week',sub:'Current vs Previous comparison'},
+    {title:'Store Listing CVR — Current Week',sub:cLabel},
+    {title:'Store Listing CVR — Previous Week',sub:pLabel},
+    {title:'Store Listing CVR — Week over Week',sub:'Explore: Visitors · Converters · Avg CVR'},
+    {title:'Ratings — Current Week',sub:cLabel},
+    {title:'Ratings — Previous Week',sub:pLabel},
+    {title:'Ratings — Week over Week',sub:'Avg Rating · Total · 5★ · 1★ ratio'},
+    {title:'A/B Testing — Android',sub:'Current listing + variants'},
+    {title:'iOS — Section Divider',sub:'App Store Connect'},
+    {title:'iOS Crash Rate — Current Week',sub:cLabel},
+    {title:'iOS Crash Rate — Previous Week',sub:pLabel},
+    {title:'iOS Crash Rate — Week over Week',sub:'Current vs Previous comparison'},
+    {title:'App Store Conversion — Current Week',sub:cLabel},
+    {title:'App Store Conversion — Previous Week',sub:pLabel},
+    {title:'iOS Conversion — Week over Week',sub:'Search · Referrer · Browse CVR'},
+    {title:'Ratings — App Store (iOS)',sub:'Screenshot + metric cards'},
+    {title:'A/B Testing — iOS',sub:'App Store Connect variants'},
+    {title:'Week Summary',sub:'Android + iOS side by side · Key metrics'}
+  ];
+  return slides;
+}
+
+
 </script>
 </body>
 </html>
